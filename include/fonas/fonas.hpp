@@ -18,6 +18,8 @@
 #include "queue.hpp"
 #include "mutex.hpp"
 
+#include "fonas/StreamBuffer.hpp"
+
 namespace fonas {
 
 using cpp_freertos::Thread;
