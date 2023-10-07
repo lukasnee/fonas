@@ -72,7 +72,8 @@ public:
      * @param data
      * @param size
      * @param timeout_ticks
-     * @return std::size_t
+     * @return std::size_t The number of bytes actually read. If it is less than the size requested, it is known that the read
+     * timed out.
      */
     std::size_t receive(std::uint8_t *data, std::size_t size, TickType_t timeout_ticks = portMAX_DELAY);
 
