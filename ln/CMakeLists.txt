@@ -1,5 +1,8 @@
 add_subdirectory(core)
 add_subdirectory(logger)
+if(LN_LUA)
+  add_subdirectory(lua)
+endif()
 if(LN_FREERTOS)
   add_subdirectory(drivers)
 endif()

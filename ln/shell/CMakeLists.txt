@@ -13,5 +13,4 @@ target_sources(
           src/Parser.cpp
           src/cmds/generic/generic.cpp)
 target_include_directories(ln_shell PUBLIC include)
-
 add_subdirectory(src/cmds/core) # TODO rename dir core -> general
