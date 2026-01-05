@@ -13,8 +13,6 @@
 #include "ln/shell/Input.hpp"
 #include "ln/shell/Cmd.hpp"
 
-#include "FreeRTOS/Addons/Clock.hpp"
-
 #include <array>
 #include <span>
 #include <cstdarg>
@@ -95,8 +93,6 @@ private:
         intermediate,
         finished,
     } escape_state;
-
-    FreeRTOS::Addons::Clock::time_point escape_start_time;
 
     Input input;
     Err last_err = Err::ok;
