@@ -9,8 +9,7 @@
 
 #include "ln/shell/CLI.hpp"
 #include "ln/shell/Parser.hpp"
-// TODO: make arrow up repeat buffer
-// TODO: some kind of esacpe signal mechanism to inform running cmd to exit.
+// TODO: some kind of escape signal mechanism to inform running cmd to exit.
 
 #include <cstdio>
 #include <cstring>
