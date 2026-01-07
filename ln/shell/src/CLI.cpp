@@ -145,27 +145,25 @@ Err CLI::execute(const Cmd &cmd, const std::span<const std::string_view> args,
     return err;
 }
 
-/** @return true if sequence finished */
-bool CLI::put_char(const char &c) {
-    if (this->handle_escape(c)) {
-        return false;
+void CLI::routine() {
+    while (true) {
+        const char c = this->getc_or_handle_escape_sequences();
+        if (c == '\x7F') {
+            this->backspace_char();
+            continue;
+        }
+        if (' ' <= c && c <= '~') {
+            this->insert(c);
+            continue;
+        }
+        if (c == '\r') {
+            this->print("\r\n");
+            this->execute_line(this->input.get());
+            this->input.clear();
+            this->print_prompt();
+            continue;
+        }
     }
-    if (c == '\x7F') {
-        this->backspace_char();
-        return true;
-    }
-    if (' ' <= c && c <= '~') {
-        this->insert(c);
-        return true;
-    }
-    if (c == '\r') {
-        this->print("\r\n");
-        const auto res = this->execute_line(this->input.get());
-        this->input.clear();
-        this->print_prompt();
-        return res;
-    }
-    return false;
 }
 
 bool CLI::execute_line(std::string_view line) {
@@ -211,90 +209,89 @@ bool CLI::execute_line(std::string_view line) {
     return true;
 }
 
-/** @result false - nothing to handle */
-bool CLI::handle_escape(const char &c) {
-    // TODO: factor out ANSI escape handling in a separate class and support
-    // ctrl+left/right for moving cursor to begin or end of input line
-    if (c == '\e') {
-        this->escape_state = EscapeState::escaped;
-        return true;
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
+char CLI::getc_or_handle_escape_sequences() {
+    std::array<char, 10> buf;
+    std::size_t buf_size = 0;
+    auto getc = [&]() -> char {
+        const auto c = std::fgetc(this->config.istream.c_file());
+        if (buf_size < buf.size()) {
+            buf[buf_size++] = c == '\e' ? 'e' : c;
+        }
+        return c;
+    };
+    auto handle_unknown = [&]() {
+        LOG_WARNING("Unknown escape sequence: %.*s", static_cast<int>(buf_size), buf.data());
+    };
+    while (true) {
+        char c = getc();
+        if (c != '\e') {
+            return c;
+        }
+        c = getc(); // if this takes too long, we should trigger on_escape()
+        // TODO: implement timeout. For now, we can trigger on_escape() after
+        // two consecutive escape characters.
+        if (c == '\e') {
+            this->on_escape();
+            continue;
+        }
+        if (c == '[') {
+            c = getc();
+            if (c == 'A') {
+                this->on_arrow_up_key();
+                continue;
+            }
+            if (c == 'B') {
+                this->on_arrow_down_key();
+                continue;
+            }
+            if (c == 'C') {
+                this->on_arrow_right_key();
+                continue;
+            }
+            if (c == 'D') {
+                this->on_arrow_left_key();
+                continue;
+            }
+            if (c == 'H') {
+                this->on_home_key();
+                continue;
+            }
+            if (c == 'F') {
+                this->on_end_key();
+                continue;
+            }
+            if (c == '1') {
+                c = getc();
+                if (c != ';') {
+                    handle_unknown();
+                    continue;
+                }
+                c = getc();
+                if (c != '5') {
+                    handle_unknown();
+                    continue;
+                }
+                c = getc();
+                if (c == 'C') {
+                    this->on_ctrl_arrow_right_key();
+                    continue;
+                }
+                if (c == 'D') {
+                    this->on_ctrl_arrow_left_key();
+                    continue;
+                }
+            }
+            if (c == '3') {
+                c = getc();
+                if (c == '~') {
+                    this->delete_char();
+                    continue;
+                }
+            }
+        }
+        handle_unknown();
     }
-    if (this->escape_state != EscapeState::escaped && this->escape_state != EscapeState::delimited &&
-        this->escape_state != EscapeState::intermediate && this->escape_state != EscapeState::finished) {
-        this->escape_state = EscapeState::none; // unexpected state
-        return false;
-    }
-    const char ascii_char_del = 0x7F;
-    if (c == ascii_char_del) {
-        delete_char();
-        this->escape_state = EscapeState::none;
-        return true;
-    }
-    return this->handle_ansi_escape(c);
-}
-
-/** @result false - nothing to handle */
-bool CLI::handle_ansi_escape(const char &c) {
-    if (c == '[') /* open delimiter */
-    {
-        this->escape_state = EscapeState::delimited;
-        return true;
-    }
-    if (this->escape_state != EscapeState::delimited && this->escape_state != EscapeState::intermediate &&
-        this->escape_state != EscapeState::finished) {
-        this->escape_state = EscapeState::failed;
-        return false;
-    }
-    return this->handle_ansi_delimited_escape(c);
-}
-
-bool CLI::handle_ansi_delimited_escape(const char &c) {
-    if (this->handle_ansi_delimited_del_escape(c)) {
-        return true;
-    }
-    if (c == 'H') {
-        this->on_home_key();
-        this->escape_state = EscapeState::finished;
-        return true;
-    }
-    if (c == 'A') {
-        this->on_arrow_up_key();
-        this->escape_state = EscapeState::finished;
-        return true;
-    }
-    if (c == 'B') {
-        this->on_arrow_down_key();
-        this->escape_state = EscapeState::finished;
-        return true;
-    }
-    if (c == 'C') {
-        this->on_arrow_right_key();
-        this->escape_state = EscapeState::finished;
-        return true;
-    }
-    if (c == 'D') {
-        this->on_arrow_left_key();
-        this->escape_state = EscapeState::finished;
-        return true;
-    }
-    this->escape_state = EscapeState::failed;
-    return false;
-}
-
-bool CLI::handle_ansi_delimited_del_escape(const char &c) {
-    if ((this->escape_state == EscapeState::delimited || this->escape_state == EscapeState::intermediate ||
-         this->escape_state == EscapeState::finished) &&
-        c == '3') {
-        this->escape_state = EscapeState::intermediate;
-        return true;
-    }
-    if ((this->escape_state == EscapeState::intermediate || this->escape_state == EscapeState::finished) && c == '~') {
-        this->delete_char();
-        this->escape_state = EscapeState::finished;
-        return true;
-    }
-    this->escape_state = EscapeState::failed;
-    return false;
 }
 
 bool CLI::delete_char() {
@@ -307,8 +304,19 @@ bool CLI::delete_char() {
     return true;
 }
 
+bool CLI::on_escape() {
+    this->clear_input();
+    return true;
+}
+
 bool CLI::on_home_key() {
     while (this->on_arrow_left_key()) {
+    }
+    return true;
+}
+
+bool CLI::on_end_key() {
+    while (this->on_arrow_right_key()) {
     }
     return true;
 }
@@ -357,6 +365,70 @@ bool CLI::on_arrow_right_key() {
         return false;
     }
     this->print(this->input.get().substr(this->input.get_cursor_pos() - 1, 1));
+    return true;
+}
+
+bool CLI::on_ctrl_arrow_left_key() {
+    char c = this->input.get()[this->input.get_cursor_pos() - 1];
+    bool isspace_to_skip = std::isspace(c);
+    bool isalnum_to_skip = std::isalnum(c);
+    while (this->input.get_cursor_pos() > 0) {
+        this->on_arrow_left_key();
+        c = this->input.get()[this->input.get_cursor_pos() - 1];
+        if (isspace_to_skip) {
+            if (std::isspace(c)) {
+                continue;
+            }
+            break;
+        }
+        if (isalnum_to_skip) {
+            if (std::isalnum(c)) {
+                continue;
+            }
+            break;
+        }
+        if (std::isspace(c)) {
+            isspace_to_skip = true;
+            continue;
+        }
+        if (std::isalnum(c)) {
+            isalnum_to_skip = true;
+            continue;
+        }
+        break;
+    }
+    return true;
+}
+
+bool CLI::on_ctrl_arrow_right_key() {
+    char c = this->input.get()[this->input.get_cursor_pos()];
+    bool isspace_to_skip = std::isspace(c);
+    bool isalnum_to_skip = std::isalnum(c);
+    while (this->input.get_cursor_pos() < this->input.get().size()) {
+        this->on_arrow_right_key();
+        const char c = this->input.get()[this->input.get_cursor_pos()];
+        if (isspace_to_skip) {
+            if (std::isspace(c)) {
+                continue;
+            }
+            break;
+        }
+        if (isalnum_to_skip) {
+            if (std::isalnum(c)) {
+                continue;
+            }
+            break;
+        }
+        if (std::isspace(c)) {
+            isspace_to_skip = true;
+            continue;
+        }
+        if (std::isalnum(c)) {
+            isalnum_to_skip = true;
+            continue;
+        }
+        break;
+    }
     return true;
 }
 

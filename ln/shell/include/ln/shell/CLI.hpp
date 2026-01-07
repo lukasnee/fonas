@@ -14,10 +14,11 @@
 #include "ln/shell/Input.hpp"
 #include "ln/shell/Cmd.hpp"
 
+#include "ln/logger/logger.h"
+
 #include <array>
 #include <span>
 #include <cstdarg>
-#include <cstdint>
 #include <cstring>
 #include <string_view>
 #include <tuple>
@@ -40,6 +41,7 @@ namespace ln::shell {
 class CLI {
 public:
     struct Config {
+        File istream = File(stdin);
         File ostream = File(stdout);
         static constexpr std::size_t printf_buffer_size = 256;
         static constexpr bool regular_response_is_enabled = true;
@@ -53,10 +55,7 @@ public:
     explicit CLI(std::span<char> input_line_buf, std::span<char> history_buf = {})
         : input{input_line_buf}, history{history_buf} {}
 
-    // NOTE: escape sequences are time sensitive !
-    // TODO: move this to a dedicated uart receiver task and join by char queue
-    // escape sequence finished (not time sensitive)
-    bool put_char(const char &c);
+    void routine();
 
     void print(const char &c, std::size_t times_to_repeat = 1);
     int print(const char *str);
@@ -72,30 +71,25 @@ private:
     Err execute(const Cmd &cmd, std::span<const std::string_view> args,
                 const char *output_color_escape_sequence = "\e[32m"); // default in green
 
-    bool handle_escape(const char &c);
-    bool handle_ansi_escape(const char &c);
-    bool handle_ansi_delimited_escape(const char &c);
-    bool handle_ansi_delimited_del_escape(const char &c);
+    char getc_or_handle_escape_sequences();
+
     bool delete_char();
+    bool on_escape();
     bool on_home_key();
+    bool on_end_key();
     bool on_arrow_up_key();
     bool on_arrow_down_key();
     bool on_arrow_right_key();
     bool on_arrow_left_key();
+    bool on_ctrl_arrow_right_key();
+    bool on_ctrl_arrow_left_key();
 
     bool backspace_char();
     bool insert(const char &c);
     void print_prompt();
     void clear_input();
 
-    enum class EscapeState : std::int8_t {
-        failed = -1,
-        none = 0,
-        escaped,
-        delimited,
-        intermediate,
-        finished,
-    } escape_state;
+    LOG_MODULE_CLASS_MEMBER(CLI, LOGGER_LEVEL_NOTSET);
 
     Input input;
     friend class History;
