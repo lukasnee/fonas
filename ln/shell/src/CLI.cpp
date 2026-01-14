@@ -466,7 +466,6 @@ bool CLI::backspace_char() {
     return true;
 }
 
-/** @return true if actually inserted */
 bool CLI::insert(const char &c) {
     if (!this->input.insert(c)) {
         return false;

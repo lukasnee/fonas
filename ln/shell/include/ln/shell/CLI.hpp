@@ -85,6 +85,7 @@ private:
     bool on_ctrl_arrow_left_key();
 
     bool backspace_char();
+    /** @return true if actually inserted */
     bool insert(const char &c);
     void print_prompt();
     void clear_input();
