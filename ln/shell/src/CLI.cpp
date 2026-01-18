@@ -172,14 +172,14 @@ void CLI::routine() {
 }
 
 bool CLI::execute_line(std::string_view line) {
-    if (!this->input.get().empty()) {
-        if (std::ranges::equal(this->input.get(),
-                               this->history.get_current_recall_line())) {
-            this->previously_called_from_history = true;
-        }
-        else {
-            this->history.add_line(this->input.get());
-        }
+    if (line.empty()) {
+        return true;
+    }
+    if (std::ranges::equal(line, this->history.get_current_recall_line())) {
+        this->previously_called_from_history = true;
+    }
+    else {
+        this->history.add_line(line);
     }
     std::array<std::string_view, ArgParser::Cfg::args_buf_size_default>
         args_buf;
