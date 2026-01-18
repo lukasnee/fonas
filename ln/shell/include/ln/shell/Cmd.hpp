@@ -21,14 +21,13 @@
 
 namespace ln::shell {
 
-enum Err : std::int8_t {
-    unknown = std::numeric_limits<std::int8_t>::min(),
-    unexpected = unknown + 1,
-    unknownCmd = -3,
-    badArg = -2,
-    fail = -1,
-    ok = 0
+enum class Err {
+#define X(name) name,
+#include "internal/Err.x"
+#undef X
 };
+
+std::string_view to_string(Err err);
 
 class CLI;
 

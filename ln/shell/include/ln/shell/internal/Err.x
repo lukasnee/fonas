@@ -1,0 +1,5 @@
+X(ok)
+X(fail)
+X(badArg)
+X(unknownCmd)
+X(unexpected)

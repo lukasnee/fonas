@@ -15,6 +15,18 @@
 
 namespace ln::shell {
 
+std::string_view to_string(Err err) {
+    static constexpr std::string_view err_svs[] = {
+#define X(name) #name,
+#include "ln/shell/internal/Err.x"
+#undef X
+    };
+    if (static_cast<std::size_t>(err) < std::size(err_svs)) {
+        return err_svs[static_cast<std::size_t>(err)];
+    }
+    return "unknown";
+}
+
 ln::StaticForwardList<Cmd> Cmd::base_cmd_list = {};
 ln::StaticForwardList<Cmd> Cmd::general_cmd_list = {};
 ln::StaticForwardList<Cmd> Cmd::global_cmd_list = {};
