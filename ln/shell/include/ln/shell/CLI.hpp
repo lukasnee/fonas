@@ -69,7 +69,7 @@ public:
     std::tuple<const Cmd *, std::span<const std::string_view>> find_cmd(
         std::span<const std::string_view> args);
 
-    bool execute_line(std::string_view line);
+    Err execute_line(std::string_view line);
 
 private:
     Err execute(const Cmd &cmd, std::span<const std::string_view> args,

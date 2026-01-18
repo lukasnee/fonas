@@ -163,7 +163,7 @@ void CLI::routine() {
         }
         if (c == '\r') {
             this->print("\r\n");
-            this->execute_line(this->input.get());
+            this->last_err = this->execute_line(this->input.get());
             this->input.clear();
             this->print_prompt();
             continue;
@@ -171,9 +171,9 @@ void CLI::routine() {
     }
 }
 
-bool CLI::execute_line(std::string_view line) {
+Err CLI::execute_line(std::string_view line) {
     if (line.empty()) {
-        return true;
+        return Err::ok;
     }
     if (std::ranges::equal(line, this->history.get_current_recall_line())) {
         this->previously_called_from_history = true;
@@ -185,7 +185,6 @@ bool CLI::execute_line(std::string_view line) {
         args_buf;
     auto opt_args = ArgParser::tokenize(line, args_buf);
     if (!opt_args) {
-        this->last_err = Err::badArg;
         if (this->config.colored_output) {
             this->print(ANSI_COLOR_RED);
         }
@@ -193,16 +192,14 @@ bool CLI::execute_line(std::string_view line) {
         if (this->config.colored_output) {
             this->print(ANSI_COLOR_RESET);
         }
-        return false;
+        return Err::badArg;
     }
     const auto args = *opt_args;
     if (args.empty()) {
-        this->last_err = Err::ok;
-        return true;
+        return Err::ok;
     }
     const auto [cmd, cmd_args] = this->find_cmd(args);
     if (!cmd) {
-        this->last_err = Err::unknownCmd;
         if (this->config.colored_output) {
             this->print(ANSI_COLOR_RED);
         }
@@ -210,10 +207,9 @@ bool CLI::execute_line(std::string_view line) {
         if (this->config.colored_output) {
             this->print(ANSI_COLOR_RESET);
         }
-        return false;
+        return Err::unknownCmd;
     }
-    this->last_err = this->execute(*cmd, cmd_args);
-    return true;
+    return this->execute(*cmd, cmd_args);
 }
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
