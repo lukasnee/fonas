@@ -38,7 +38,7 @@ public:
         CLI &cli;
         ArgParser &argp;
         std::span<const std::string_view>
-            args; // TODO: deprecated and remove becuase argp has args
+            args; // TODO: deprecated and remove because argp has args
     };
 
     using Fn = std::function<Err(Ctx)>;
