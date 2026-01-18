@@ -19,12 +19,14 @@ LOG_MODULE(cli_history, LOGGER_LEVEL_INFO);
 
 namespace ln::shell {
 
+const char line_separator = '\0';
+
 std::ranges::subrange<ln::RingBufferView<char>::iterator> History::
     get_current_recall_line() {
     auto range =
         std::ranges::subrange{this->recall_pos, this->ring_buffer.end()};
     return std::ranges::subrange{this->recall_pos,
-                                 std::ranges::find(range, '\n')};
+                                 std::ranges::find(range, line_separator)};
 }
 
 void History::add_line(std::string_view line) {
@@ -32,7 +34,7 @@ void History::add_line(std::string_view line) {
         LN_PANIC();
         return;
     }
-    if (!this->ring_buffer.push_overwrite('\n')) {
+    if (!this->ring_buffer.push_overwrite(line_separator)) {
         LN_PANIC();
         return;
     }
@@ -45,13 +47,13 @@ std::ranges::subrange<ln::RingBufferView<char>::iterator> History::
     auto line_end_it = this->recall_pos;
     auto range =
         std::ranges::subrange{line_begin_it, line_end_it} | std::views::reverse;
-    if (auto it = std::ranges::find(range, '\n');
+    if (auto it = std::ranges::find(range, line_separator);
         it != std::ranges::end(range)) {
         line_end_it = std::prev(it.base());
     }
     range =
         std::ranges::subrange{line_begin_it, line_end_it} | std::views::reverse;
-    auto it = std::ranges::find(range, '\n');
+    auto it = std::ranges::find(range, line_separator);
     this->recall_pos = it.base();
     return std::ranges::subrange{this->recall_pos, line_end_it};
 }
@@ -61,12 +63,12 @@ std::ranges::subrange<ln::RingBufferView<char>::iterator> History::
     auto line_begin_it = this->recall_pos;
     auto line_end_it = this->ring_buffer.end();
     auto range = std::ranges::subrange{line_begin_it, line_end_it};
-    if (auto it = std::ranges::find(range, '\n');
+    if (auto it = std::ranges::find(range, line_separator);
         it != std::ranges::end(range)) {
         line_begin_it = std::next(it);
     }
     range = std::ranges::subrange{line_begin_it, line_end_it};
-    auto it = std::ranges::find(range, '\n');
+    auto it = std::ranges::find(range, line_separator);
     if (it != std::ranges::end(range)) {
         this->recall_pos = line_begin_it;
     }
@@ -86,6 +88,10 @@ Cmd History::cmd_history =
                  .short_description = "print command history",
                  .fn = [](Cmd::Ctx ctx) {
                      for (const char c : ctx.cli.history.ring_buffer) {
+                         if (c == line_separator) {
+                             ctx.cli.print('\n');
+                             continue;
+                         }
                          ctx.cli.print(c);
                      }
                      return Err::ok;
