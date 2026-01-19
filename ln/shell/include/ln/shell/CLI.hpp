@@ -79,21 +79,23 @@ private:
     char getc_or_handle_escape_sequences();
 
     bool delete_char();
-    bool on_escape();
-    bool on_home_key();
-    bool on_end_key();
-    bool on_arrow_up_key();
-    bool on_arrow_down_key();
-    bool on_arrow_right_key();
-    bool on_arrow_left_key();
-    bool on_ctrl_arrow_right_key();
-    bool on_ctrl_arrow_left_key();
+    bool move_cursor_begin();
+    bool move_cursor_end();
+    void add_line_to_history(std::string_view line);
+    std::ranges::subrange<ln::RingBufferView<char>::iterator>
+    get_previous_history_line();
+    bool recall_previous_line_from_history();
+    bool recall_next_line_from_history();
+    bool step_cursor_left();
+    bool step_cursor_right();
+    bool step_cursor_left_word();
+    bool step_cursor_right_word();
 
+    void print_prompt();
+    void clear_input();
     bool backspace_char();
     /** @return true if actually inserted */
     bool insert(const char &c);
-    void print_prompt();
-    void clear_input();
 
     LOG_MODULE_CLASS_MEMBER(CLI, LOGGER_LEVEL_NOTSET);
 

@@ -163,7 +163,9 @@ void CLI::routine() {
         }
         if (c == '\r') {
             this->print("\r\n");
-            this->last_err = this->execute_line(this->input.get());
+            auto line = this->input.get();
+            this->add_line_to_history(line);
+            this->last_err = this->execute_line(line);
             this->input.clear();
             this->print_prompt();
             continue;
@@ -174,12 +176,6 @@ void CLI::routine() {
 Err CLI::execute_line(std::string_view line) {
     if (line.empty()) {
         return Err::ok;
-    }
-    if (std::ranges::equal(line, this->history.get_current_recall_line())) {
-        this->previously_called_from_history = true;
-    }
-    else {
-        this->history.add_line(line);
     }
     std::array<std::string_view, ArgParser::Cfg::args_buf_size_default>
         args_buf;
@@ -232,37 +228,37 @@ char CLI::getc_or_handle_escape_sequences() {
         if (c != '\e') {
             return c;
         }
-        c = getc(); // if this takes too long, we should trigger on_escape()
-        // TODO: implement timeout. For now, we can trigger on_escape() after
-        // two consecutive escape characters.
-        if (c == '\e') {
-            this->on_escape();
+        c = getc(); /* if this takes too long, we should trigger "escape key"
+                       action TODO: implement timeout. For now, we can trigger
+                       an action after two consecutive escape characters. */
+        if (c == '\e') { // Escape key (twice)
+            this->clear_input();
             continue;
         }
         if (c == '[') {
             c = getc();
-            if (c == 'A') {
-                this->on_arrow_up_key();
+            if (c == 'A') { // Up arrow
+                this->recall_previous_line_from_history();
                 continue;
             }
-            if (c == 'B') {
-                this->on_arrow_down_key();
+            if (c == 'B') { // Down arrow
+                this->recall_next_line_from_history();
                 continue;
             }
-            if (c == 'C') {
-                this->on_arrow_right_key();
+            if (c == 'C') { // Right arrow
+                this->step_cursor_right();
                 continue;
             }
-            if (c == 'D') {
-                this->on_arrow_left_key();
+            if (c == 'D') { // Left arrow
+                this->step_cursor_left();
                 continue;
             }
-            if (c == 'H') {
-                this->on_home_key();
+            if (c == 'H') { // Home key
+                this->move_cursor_begin();
                 continue;
             }
-            if (c == 'F') {
-                this->on_end_key();
+            if (c == 'F') { // End key
+                this->move_cursor_end();
                 continue;
             }
             if (c == '1') {
@@ -277,18 +273,18 @@ char CLI::getc_or_handle_escape_sequences() {
                     continue;
                 }
                 c = getc();
-                if (c == 'C') {
-                    this->on_ctrl_arrow_right_key();
+                if (c == 'C') { // Ctrl + Right arrow
+                    this->step_cursor_right_word();
                     continue;
                 }
-                if (c == 'D') {
-                    this->on_ctrl_arrow_left_key();
+                if (c == 'D') { // Ctrl + Left arrow
+                    this->step_cursor_left_word();
                     continue;
                 }
             }
             if (c == '3') {
                 c = getc();
-                if (c == '~') {
+                if (c == '~') { // Delete key
                     this->delete_char();
                     continue;
                 }
@@ -308,32 +304,38 @@ bool CLI::delete_char() {
     return true;
 }
 
-bool CLI::on_escape() {
-    this->clear_input();
-    return true;
-}
-
-bool CLI::on_home_key() {
-    while (this->on_arrow_left_key()) {
+bool CLI::move_cursor_begin() {
+    while (this->step_cursor_left()) {
     }
     return true;
 }
 
-bool CLI::on_end_key() {
-    while (this->on_arrow_right_key()) {
+bool CLI::move_cursor_end() {
+    while (this->step_cursor_right()) {
     }
     return true;
 }
 
-bool CLI::on_arrow_up_key() {
-    decltype((this->history.get_current_recall_line())) line = {};
-    if (this->previously_called_from_history) {
-        this->previously_called_from_history = false;
-        line = this->history.get_current_recall_line();
+void CLI::add_line_to_history(std::string_view line) {
+    if (std::ranges::equal(line, this->history.get_current_recall_line())) {
+        this->previously_called_from_history = true;
     }
     else {
-        line = this->history.recall_previous();
+        this->history.add_line(line);
     }
+}
+
+std::ranges::subrange<ln::RingBufferView<char>::iterator> CLI::
+    get_previous_history_line() {
+    if (this->previously_called_from_history) {
+        this->previously_called_from_history = false;
+        return this->history.get_current_recall_line();
+    }
+    return this->history.recall_previous();
+}
+
+bool CLI::recall_previous_line_from_history() {
+    auto line = this->get_previous_history_line();
     if (line.empty()) {
         return false;
     }
@@ -344,7 +346,7 @@ bool CLI::on_arrow_up_key() {
     return true;
 }
 
-bool CLI::on_arrow_down_key() {
+bool CLI::recall_next_line_from_history() {
     auto line = this->history.recall_next();
     if (line.empty()) {
         return false;
@@ -356,7 +358,7 @@ bool CLI::on_arrow_down_key() {
     return true;
 }
 
-bool CLI::on_arrow_left_key() {
+bool CLI::step_cursor_left() {
     if (!this->input.step_left()) {
         return false;
     }
@@ -364,7 +366,7 @@ bool CLI::on_arrow_left_key() {
     return true;
 }
 
-bool CLI::on_arrow_right_key() {
+bool CLI::step_cursor_right() {
     if (!this->input.step_right()) {
         return false;
     }
@@ -372,12 +374,12 @@ bool CLI::on_arrow_right_key() {
     return true;
 }
 
-bool CLI::on_ctrl_arrow_left_key() {
+bool CLI::step_cursor_left_word() {
     char c = this->input.get()[this->input.get_cursor_pos() - 1];
     bool isspace_to_skip = std::isspace(c);
     bool isalnum_to_skip = std::isalnum(c);
     while (this->input.get_cursor_pos() > 0) {
-        this->on_arrow_left_key();
+        this->step_cursor_left();
         c = this->input.get()[this->input.get_cursor_pos() - 1];
         if (isspace_to_skip) {
             if (std::isspace(c)) {
@@ -404,12 +406,12 @@ bool CLI::on_ctrl_arrow_left_key() {
     return true;
 }
 
-bool CLI::on_ctrl_arrow_right_key() {
+bool CLI::step_cursor_right_word() {
     char c = this->input.get()[this->input.get_cursor_pos()];
     bool isspace_to_skip = std::isspace(c);
     bool isalnum_to_skip = std::isalnum(c);
     while (this->input.get_cursor_pos() < this->input.get().size()) {
-        this->on_arrow_right_key();
+        this->step_cursor_right();
         const char c = this->input.get()[this->input.get_cursor_pos()];
         if (isspace_to_skip) {
             if (std::isspace(c)) {
