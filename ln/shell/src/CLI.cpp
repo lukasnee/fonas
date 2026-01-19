@@ -63,20 +63,20 @@ std::tuple<const Cmd *, std::span<const std::string_view>> CLI::find_cmd(
             continue;
         }
         std::size_t arg_offset = 0;
-        auto cmd = Cmd::find_cmd_by_name(*cmd_list_ptr, args[arg_offset]);
-        if (!cmd) {
+        auto cmd_ptr = Cmd::find_cmd_by_name(*cmd_list_ptr, args[arg_offset]);
+        if (!cmd_ptr) {
             continue;
         }
         while (args.size() - arg_offset - 1) {
             const Cmd *child_cmd =
-                cmd->find_child_cmd_by_name(args[arg_offset + 1]);
+                cmd_ptr->find_child_cmd_by_name(args[arg_offset + 1]);
             if (!child_cmd) {
                 break;
             }
             arg_offset++;
-            cmd = child_cmd;
+            cmd_ptr = child_cmd;
         }
-        return {cmd, args.subspan(arg_offset + 1)};
+        return {cmd_ptr, args.subspan(arg_offset + 1)};
     }
     return {};
 }
@@ -202,18 +202,11 @@ Err CLI::execute_line(std::string_view line) {
     if (args.empty()) {
         return Err::ok;
     }
-    const auto [cmd, cmd_args] = this->find_cmd(args);
-    if (!cmd) {
-        if (this->config.colored_output) {
-            this->print(ANSI_COLOR_RED);
-        }
-        this->print("command not found\n");
-        if (this->config.colored_output) {
-            this->print(ANSI_COLOR_RESET);
-        }
+    const auto [cmd_ptr, cmd_args] = this->find_cmd(args);
+    if (!cmd_ptr) {
         return Err::unknownCmd;
     }
-    return this->execute(*cmd, cmd_args);
+    return this->execute(*cmd_ptr, cmd_args);
 }
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
