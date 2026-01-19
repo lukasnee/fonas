@@ -166,9 +166,17 @@ void CLI::routine() {
             auto line = this->input.get();
             this->add_line_to_history(line);
             this->last_err = this->execute_line(line);
+            if (this->last_err == Err::unknownCmd) {
+                if (this->config.colored_output) {
+                    this->print(ANSI_COLOR_RED);
+                }
+                this->print("command not found\n");
+                if (this->config.colored_output) {
+                    this->print(ANSI_COLOR_RESET);
+                }
+            }
             this->input.clear();
             this->print_prompt();
-            continue;
         }
     }
 }
@@ -440,8 +448,13 @@ bool CLI::step_cursor_right_word() {
 
 void CLI::print_prompt(void) {
     if (this->config.colored_output) {
-        this->print(this->last_err == Err::ok ? ANSI_COLOR_GREEN
-                                              : ANSI_COLOR_RED);
+        this->print(
+            (this->last_err == Err::ok || this->last_err == Err::incomplete)
+                ? ANSI_COLOR_GREEN
+                : ANSI_COLOR_RED);
+    }
+    if (this->last_err == Err::incomplete) {
+        this->print('>');
     }
     this->print("> ");
     if (this->config.colored_output) {
