@@ -166,17 +166,40 @@ void CLI::routine() {
             auto line = this->input.get();
             this->add_line_to_history(line);
             this->last_err = this->execute_line(line);
-            if (this->last_err == Err::unknownCmd) {
-                if (this->config.colored_output) {
-                    this->print(ANSI_COLOR_RED);
-                }
-                this->print("command not found\n");
-                if (this->config.colored_output) {
-                    this->print(ANSI_COLOR_RESET);
-                }
+            if (this->last_err != Err::unknownCmd) {
+                this->input.clear();
+                this->print_prompt();
+                continue;
             }
-            this->input.clear();
-            this->print_prompt();
+            if (this->config.interpreter) {
+                const auto err = this->config.interpreter->interpret_line(line);
+                if (err == Interpreter::Err::expectingMoreInput) {
+                    this->last_err = Err::incomplete;
+                    this->input.insert('\n');
+                    this->print_prompt();
+                    continue;
+                }
+                if (err == Interpreter::Err::ok) {
+                    this->last_err = Err::ok;
+                }
+                else if (err == Interpreter::Err::compileError ||
+                         err == Interpreter::Err::runtimeError) {
+                    this->last_err = Err::fail;
+                }
+                else {
+                    this->last_err = Err::unexpected;
+                }
+                this->input.clear();
+                this->print_prompt();
+                continue;
+            }
+            if (this->config.colored_output) {
+                this->print(ANSI_COLOR_RED);
+            }
+            this->print("command not found\n");
+            if (this->config.colored_output) {
+                this->print(ANSI_COLOR_RESET);
+            }
         }
     }
 }

@@ -10,6 +10,7 @@
 #pragma once
 
 #include "ln/File.hpp"
+#include "ln/Interpreter.hpp"
 #include "ln/shell/History.hpp"
 #include "ln/shell/Input.hpp"
 #include "ln/shell/Cmd.hpp"
@@ -48,6 +49,7 @@ public:
         static constexpr bool regular_response_is_enabled = true;
         bool colored_output = true;
         bool print_result_tags = false;
+        Interpreter *interpreter = nullptr;
         static inline std::array<ln::StaticForwardList<Cmd> *, 3>
             default_cmd_lists = {&Cmd::base_cmd_list, &Cmd::general_cmd_list,
                                  &Cmd::global_cmd_list};
