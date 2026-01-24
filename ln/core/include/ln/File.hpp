@@ -39,7 +39,8 @@ public:
     /**
      * @brief Construct for regular files on filesystem.
      */
-    explicit File(const char *path, const char *mode) : file{fopen(path, mode), file_deleter} {
+    explicit File(const char *path, const char *mode)
+        : file{fopen(path, mode), file_deleter} {
         if (!this->file) {
             LN_PANIC();
         }

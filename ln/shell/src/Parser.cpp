@@ -17,12 +17,14 @@
 
 namespace ln::shell {
 
-std::optional<std::span<std::string_view>> ArgParser::tokenize(const std::string_view sv,
-                                                               std::span<std::string_view> args_buf) {
+std::optional<std::span<std::string_view>> ArgParser::tokenize(
+    const std::string_view sv, std::span<std::string_view> args_buf) {
     size_t arg_count = 0;
     const char *arg_begin = nullptr;
     char quote_char = '\0';
-    for (const char *head = sv.data(); static_cast<size_t>(head - sv.data()) < sv.length() && *head != '\0'; head++) {
+    for (const char *head = sv.data();
+         static_cast<size_t>(head - sv.data()) < sv.length() && *head != '\0';
+         head++) {
         if (quote_char != '\0') {
             if (*head == quote_char) {
                 quote_char = '\0';
@@ -30,7 +32,8 @@ std::optional<std::span<std::string_view>> ArgParser::tokenize(const std::string
                     if (arg_count >= args_buf.size()) {
                         return std::nullopt; // not enough space in args_buf
                     }
-                    args_buf[arg_count++] = std::string_view(arg_begin, head - arg_begin);
+                    args_buf[arg_count++] =
+                        std::string_view(arg_begin, head - arg_begin);
                     arg_begin = nullptr;
                 }
             }
@@ -41,7 +44,8 @@ std::optional<std::span<std::string_view>> ArgParser::tokenize(const std::string
                     if (arg_count >= args_buf.size()) {
                         return std::nullopt; // not enough space in args_buf
                     }
-                    args_buf[arg_count++] = std::string_view(arg_begin, head - arg_begin);
+                    args_buf[arg_count++] =
+                        std::string_view(arg_begin, head - arg_begin);
                 }
                 quote_char = *head;
                 arg_begin = head + 1;
@@ -53,7 +57,8 @@ std::optional<std::span<std::string_view>> ArgParser::tokenize(const std::string
                 if (arg_count >= args_buf.size()) {
                     return std::nullopt; // not enough space in args_buf
                 }
-                args_buf[arg_count++] = std::string_view(arg_begin, head - arg_begin);
+                args_buf[arg_count++] =
+                    std::string_view(arg_begin, head - arg_begin);
                 arg_begin = nullptr;
             }
             else if (!arg_begin) {
@@ -68,12 +73,14 @@ std::optional<std::span<std::string_view>> ArgParser::tokenize(const std::string
         if (quote_char != '\0') {
             return std::nullopt; // unmatched quote
         }
-        args_buf[arg_count++] = std::string_view(arg_begin, sv.data() + sv.length() - arg_begin);
+        args_buf[arg_count++] =
+            std::string_view(arg_begin, sv.data() + sv.length() - arg_begin);
     }
     return args_buf.first(arg_count);
 }
 
-bool ArgParser::validate_arg_composition(File &ostream, std::span<const std::string_view> args) const {
+bool ArgParser::validate_arg_composition(
+    File &ostream, std::span<const std::string_view> args) const {
     size_t positional_arg_count = 0;
     for (const auto &arg_cfg : this->arg_cfg) {
         if (arg_cfg.role == Arg::Role::positional) {
@@ -81,14 +88,17 @@ bool ArgParser::validate_arg_composition(File &ostream, std::span<const std::str
         }
     }
     if (args.size() < positional_arg_count) {
-        std::fprintf(ostream.c_file(), "Error: not enough arguments (expected %zu, got %zu)\n", positional_arg_count,
-                     args.size());
+        std::fprintf(ostream.c_file(),
+                     "Error: not enough arguments (expected %zu, got %zu)\n",
+                     positional_arg_count, args.size());
         return false;
     }
     for (const auto [i, arg_cfg] : std::views::enumerate(this->arg_cfg)) {
         auto arg = args[i];
         if (arg.empty()) {
-            std::fprintf(ostream.c_file(), "Error: expected non-empty positional argument %zu\n", i);
+            std::fprintf(ostream.c_file(),
+                         "Error: expected non-empty positional argument %zu\n",
+                         i);
             return false;
         }
         switch (arg_cfg.type) {

@@ -39,7 +39,8 @@ public:
      * @return true success.
      * @return false failure.
      */
-    bool read(std::uint8_t *data, std::size_t size, FreeRTOS::Addons::Timeout timeout = {}) {
+    bool read(std::uint8_t *data, std::size_t size,
+              FreeRTOS::Addons::Timeout timeout = {}) {
         if (size == 0) {
             return true;
         }
@@ -50,7 +51,8 @@ public:
         if (!this->initialized) {
             return false;
         }
-        // assure that the binary semaphore is not already given from previous timed out read() call.
+        // assure that the binary semaphore is not already given from previous
+        // timed out read() call.
         // TODO: check if this is necessary.
         this->semaphore.give();
         this->semaphore.take();
@@ -65,11 +67,13 @@ public:
     }
 
     /**
-     * @brief Low-level callback signaling read completion (either ISR or thread context).
+     * @brief Low-level callback signaling read completion (either ISR or thread
+     * context).
      */
     void ll_async_read_completed_cb() {
         bool higherPriorityTaskWoken = false;
-        const auto is_inside_interrupt = FreeRTOS::Addons::Kernel::isInsideInterrupt();
+        const auto is_inside_interrupt =
+            FreeRTOS::Addons::Kernel::isInsideInterrupt();
         if (is_inside_interrupt) {
             this->semaphore.giveFromISR(higherPriorityTaskWoken);
         }
@@ -111,7 +115,8 @@ public:
      * @return true success.
      * @return false failure.
      */
-    bool write(const std::uint8_t *data, std::size_t size, FreeRTOS::Addons::Timeout timeout = {}) {
+    bool write(const std::uint8_t *data, std::size_t size,
+               FreeRTOS::Addons::Timeout timeout = {}) {
         if (size == 0) {
             return true;
         }
@@ -122,7 +127,8 @@ public:
         if (!this->initialized) {
             return false;
         }
-        // assure that the binary semaphore is not already given from previous timed out write() call.
+        // assure that the binary semaphore is not already given from previous
+        // timed out write() call.
         // TODO: check if this is necessary.
         this->semaphore.give();
         this->semaphore.take();
@@ -137,11 +143,13 @@ public:
     }
 
     /**
-     * @brief Low-level callback signaling write completion (either ISR or thread context).
+     * @brief Low-level callback signaling write completion (either ISR or
+     * thread context).
      */
     void ll_async_write_completed_cb() {
         bool higherPriorityTaskWoken = false;
-        const auto is_inside_interrupt = FreeRTOS::Addons::Kernel::isInsideInterrupt();
+        const auto is_inside_interrupt =
+            FreeRTOS::Addons::Kernel::isInsideInterrupt();
         if (is_inside_interrupt) {
             this->semaphore.giveFromISR(higherPriorityTaskWoken);
         }
@@ -174,6 +182,7 @@ private:
 template <StreamType stream_type> struct Stream {};
 template <> struct Stream<StreamType::r> : public ReadStream {};
 template <> struct Stream<StreamType::w> : public WriteStream {};
-template <> struct Stream<StreamType::rw> : public ReadStream, public WriteStream {};
+template <>
+struct Stream<StreamType::rw> : public ReadStream, public WriteStream {};
 
 } // namespace ln::drivers::EventDriven

@@ -39,9 +39,13 @@ public:
             return tmp;
         }
 
-        bool operator==(const iterator &other) const { return current == other.current; }
+        bool operator==(const iterator &other) const {
+            return current == other.current;
+        }
 
-        bool operator!=(const iterator &other) const { return !(*this == other); }
+        bool operator!=(const iterator &other) const {
+            return !(*this == other);
+        }
 
     private:
         StaticForwardListNode<T> *current;
@@ -49,7 +53,8 @@ public:
 
     class const_iterator {
     public:
-        explicit const_iterator(const StaticForwardListNode<T> *node) : current(node) {}
+        explicit const_iterator(const StaticForwardListNode<T> *node)
+            : current(node) {}
 
         const T &operator*() const { return static_cast<const T &>(*current); }
         const T *operator->() const { return static_cast<const T *>(current); }
@@ -67,9 +72,13 @@ public:
             return tmp;
         }
 
-        bool operator==(const const_iterator &other) const { return current == other.current; }
+        bool operator==(const const_iterator &other) const {
+            return current == other.current;
+        }
 
-        bool operator!=(const const_iterator &other) const { return !(*this == other); }
+        bool operator!=(const const_iterator &other) const {
+            return !(*this == other);
+        }
 
     private:
         const StaticForwardListNode<T> *current;
@@ -89,7 +98,9 @@ public:
     [[nodiscard]] const_iterator end() const { return const_iterator(nullptr); }
 
     [[nodiscard]] const_iterator cbegin() const { return const_iterator(head); }
-    [[nodiscard]] const_iterator cend() const { return const_iterator(nullptr); }
+    [[nodiscard]] const_iterator cend() const {
+        return const_iterator(nullptr);
+    }
 
 private:
     StaticForwardListNode<T> *head = nullptr;

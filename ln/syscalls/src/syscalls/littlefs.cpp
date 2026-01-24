@@ -73,7 +73,8 @@ int open(char *path, int flags) {
         return -1;
     }
     int lfs_flags = 0;
-    if (flags & ~(O_RDONLY | O_WRONLY | O_RDWR | O_APPEND | O_CREAT | O_TRUNC | O_EXCL)) {
+    if (flags & ~(O_RDONLY | O_WRONLY | O_RDWR | O_APPEND | O_CREAT | O_TRUNC |
+                  O_EXCL)) {
         errno = EINVAL;
         return -1;
     }

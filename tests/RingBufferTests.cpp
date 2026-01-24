@@ -60,7 +60,8 @@ TEST_CASE("ln::RingBuffer fill and full", "[ln::RingBuffer]") {
     REQUIRE_FALSE(rb.push(40));
 }
 
-TEST_CASE("ln::RingBuffer preserves FIFO order across wrap-around", "[ln::RingBuffer]") {
+TEST_CASE("ln::RingBuffer preserves FIFO order across wrap-around",
+          "[ln::RingBuffer]") {
     ln::RingBuffer<int, 3> rb{};
 
     // Fill then pop one to force wrap-around on next pushes
@@ -123,7 +124,8 @@ TEST_CASE("ln::RingBuffer::clear resets state", "[ln::RingBuffer]") {
     REQUIRE(v.value() == 3);
 }
 
-TEST_CASE("ln::RingBuffer::push_overwrite overwrites oldest element", "[ln::RingBuffer]") {
+TEST_CASE("ln::RingBuffer::push_overwrite overwrites oldest element",
+          "[ln::RingBuffer]") {
     ln::RingBuffer<int, 3> rb{};
 
     REQUIRE(rb.push(1));
@@ -140,7 +142,9 @@ TEST_CASE("ln::RingBuffer::push_overwrite overwrites oldest element", "[ln::Ring
     REQUIRE(rb.capacity() == 3);
 }
 
-TEST_CASE("ln::RingBuffer::push(std::span) in normal mode fails when not enough space", "[ln::RingBuffer][span]") {
+TEST_CASE("ln::RingBuffer::push(std::span) in normal mode fails when not "
+          "enough space",
+          "[ln::RingBuffer][span]") {
     ln::RingBuffer<int, 4> rb{};
 
     std::array<int, 2> initial{{1, 2}};
@@ -155,7 +159,9 @@ TEST_CASE("ln::RingBuffer::push(std::span) in normal mode fails when not enough 
     REQUIRE(rb[1] == 2);
 }
 
-TEST_CASE("ln::RingBuffer::push(std::span) in normal mode succeeds when enough space", "[ln::RingBuffer][span]") {
+TEST_CASE(
+    "ln::RingBuffer::push(std::span) in normal mode succeeds when enough space",
+    "[ln::RingBuffer][span]") {
     ln::RingBuffer<int, 5> rb{};
 
     std::array<int, 2> first{{1, 2}};
@@ -173,7 +179,9 @@ TEST_CASE("ln::RingBuffer::push(std::span) in normal mode succeeds when enough s
     REQUIRE(rb[4] == 5);
 }
 
-TEST_CASE("ln::RingBuffer::push(std::span) in overwrite mode replaces oldest elements", "[ln::RingBuffer][span]") {
+TEST_CASE("ln::RingBuffer::push(std::span) in overwrite mode replaces oldest "
+          "elements",
+          "[ln::RingBuffer][span]") {
     ln::RingBuffer<int, 4> rb{};
 
     std::array<int, 3> first{{1, 2, 3}};
@@ -190,7 +198,8 @@ TEST_CASE("ln::RingBuffer::push(std::span) in overwrite mode replaces oldest ele
     REQUIRE(rb[3] == 6);
 }
 
-TEST_CASE("ln::RingBuffer::push(std::span) handles wrap-around correctly", "[ln::RingBuffer][span]") {
+TEST_CASE("ln::RingBuffer::push(std::span) handles wrap-around correctly",
+          "[ln::RingBuffer][span]") {
     ln::RingBuffer<int, 5> rb{};
 
     std::array<int, 3> a{{1, 2, 3}};
@@ -212,7 +221,8 @@ TEST_CASE("ln::RingBuffer::push(std::span) handles wrap-around correctly", "[ln:
     REQUIRE(rb[4] == 7);
 }
 
-TEST_CASE("ln::RingBuffer supports range-based for (mutable)", "[ln::RingBuffer][iterator]") {
+TEST_CASE("ln::RingBuffer supports range-based for (mutable)",
+          "[ln::RingBuffer][iterator]") {
     ln::RingBuffer<int, 5> rb{};
 
     std::array<int, 3> a{{1, 2, 3}};
@@ -232,7 +242,8 @@ TEST_CASE("ln::RingBuffer supports range-based for (mutable)", "[ln::RingBuffer]
     REQUIRE(rb[2] == 13);
 }
 
-TEST_CASE("ln::RingBuffer supports range-based for (const)", "[ln::RingBuffer][iterator]") {
+TEST_CASE("ln::RingBuffer supports range-based for (const)",
+          "[ln::RingBuffer][iterator]") {
     ln::RingBuffer<int, 4> rb{};
 
     std::array<int, 3> a{{5, 6, 7}};
@@ -253,7 +264,8 @@ TEST_CASE("ln::RingBuffer supports range-based for (const)", "[ln::RingBuffer][i
     REQUIRE(sum == 5 + 6 + 7);
 }
 
-TEST_CASE("ln::RingBuffer iterator traverses in FIFO order across wrap-around", "[ln::RingBuffer][iterator]") {
+TEST_CASE("ln::RingBuffer iterator traverses in FIFO order across wrap-around",
+          "[ln::RingBuffer][iterator]") {
     ln::RingBuffer<int, 4> rb{};
 
     // Fill and then pop some to force tail/head movement
@@ -273,7 +285,8 @@ TEST_CASE("ln::RingBuffer iterator traverses in FIFO order across wrap-around", 
     REQUIRE(idx == 4);
 }
 
-TEST_CASE("ln::RingBuffer models std::ranges::range (non-const)", "[ln::RingBuffer][ranges]") {
+TEST_CASE("ln::RingBuffer models std::ranges::range (non-const)",
+          "[ln::RingBuffer][ranges]") {
     ln::RingBuffer<int, 5> rb{};
 
     std::array<int, 4> data{{1, 2, 3, 4}};
@@ -293,7 +306,8 @@ TEST_CASE("ln::RingBuffer models std::ranges::range (non-const)", "[ln::RingBuff
     REQUIRE(expected == 5); // 1..4
 }
 
-TEST_CASE("ln::RingBuffer models std::ranges::range (const)", "[ln::RingBuffer][ranges]") {
+TEST_CASE("ln::RingBuffer models std::ranges::range (const)",
+          "[ln::RingBuffer][ranges]") {
     ln::RingBuffer<int, 5> rb{};
 
     std::array<int, 3> data{{10, 20, 30}};
@@ -316,7 +330,8 @@ TEST_CASE("ln::RingBuffer models std::ranges::range (const)", "[ln::RingBuffer][
     REQUIRE(idx == expected.size());
 }
 
-TEST_CASE("ln::RingBuffer works with std::views::take/drop", "[ln::RingBuffer][ranges][views]") {
+TEST_CASE("ln::RingBuffer works with std::views::take/drop",
+          "[ln::RingBuffer][ranges][views]") {
     ln::RingBuffer<int, 6> rb{};
 
     std::array<int, 5> data{{1, 2, 3, 4, 5}};
@@ -343,7 +358,8 @@ TEST_CASE("ln::RingBuffer works with std::views::take/drop", "[ln::RingBuffer][r
     }
 }
 
-TEST_CASE("ln::RingBuffer works with std::views::take/drop on const buffer", "[ln::RingBuffer][ranges][views]") {
+TEST_CASE("ln::RingBuffer works with std::views::take/drop on const buffer",
+          "[ln::RingBuffer][ranges][views]") {
     ln::RingBuffer<int, 6> rb{};
 
     std::array<int, 5> data{{1, 2, 3, 4, 5}};
@@ -362,12 +378,14 @@ TEST_CASE("ln::RingBuffer works with std::views::take/drop on const buffer", "[l
     }
 }
 
-std::ranges::subrange<ln::RingBufferView<int>::iterator> last_5(ln::RingBufferView<int> &rb) {
+std::ranges::subrange<ln::RingBufferView<int>::iterator> last_5(
+    ln::RingBufferView<int> &rb) {
     auto last = rb.end();
     auto first = (rb.size() > 5) ? last - 5 : rb.begin();
     return {first, last};
 }
-TEST_CASE("ln::RingBuffer get last 3 element range", "[ln::RingBuffer][ranges]") {
+TEST_CASE("ln::RingBuffer get last 3 element range",
+          "[ln::RingBuffer][ranges]") {
     ln::RingBuffer<int, 10> rb{};
 
     for (int i = 1; i <= 7; ++i) {
@@ -383,7 +401,8 @@ TEST_CASE("ln::RingBuffer get last 3 element range", "[ln::RingBuffer][ranges]")
     }
 }
 
-TEST_CASE("ln::RingBuffer range reverse iteration", "[ln::RingBuffer][ranges]") {
+TEST_CASE("ln::RingBuffer range reverse iteration",
+          "[ln::RingBuffer][ranges]") {
     ln::RingBuffer<int, 10> rb{};
 
     for (int i = 1; i <= 5; ++i) {

@@ -24,7 +24,8 @@
 #include <tuple>
 
 // TODO: extract color code for logger and CLI
-// TODO: rework the OK FAIL tags, color codes, etc. Make the interface cleaner and flexible.
+// TODO: rework the OK FAIL tags, color codes, etc. Make the interface cleaner
+// and flexible.
 #define ANSI_COLOR_BLACK "\e[30m"
 #define ANSI_COLOR_RED "\e[31m"
 #define ANSI_COLOR_GREEN "\e[32m"
@@ -47,12 +48,14 @@ public:
         static constexpr bool regular_response_is_enabled = true;
         bool colored_output = true;
         bool print_result_tags = false;
-        static inline std::array<ln::StaticForwardList<Cmd> *, 3> default_cmd_lists = {
-            &Cmd::base_cmd_list, &Cmd::general_cmd_list, &Cmd::global_cmd_list};
+        static inline std::array<ln::StaticForwardList<Cmd> *, 3>
+            default_cmd_lists = {&Cmd::base_cmd_list, &Cmd::general_cmd_list,
+                                 &Cmd::global_cmd_list};
         std::span<ln::StaticForwardList<Cmd> *> cmd_lists = default_cmd_lists;
     } config;
 
-    explicit CLI(std::span<char> input_line_buf, std::span<char> history_buf = {})
+    explicit CLI(std::span<char> input_line_buf,
+                 std::span<char> history_buf = {})
         : input{input_line_buf}, history{history_buf} {}
 
     void routine();
@@ -63,13 +66,15 @@ public:
     int printf(const char *fmt, ...);
 
     /** @return {cmd, args} */
-    std::tuple<const Cmd *, std::span<const std::string_view>> find_cmd(std::span<const std::string_view> args);
+    std::tuple<const Cmd *, std::span<const std::string_view>> find_cmd(
+        std::span<const std::string_view> args);
 
     bool execute_line(std::string_view line);
 
 private:
     Err execute(const Cmd &cmd, std::span<const std::string_view> args,
-                const char *output_color_escape_sequence = "\e[32m"); // default in green
+                const char *output_color_escape_sequence =
+                    "\e[32m"); // default in green
 
     char getc_or_handle_escape_sequences();
 

@@ -16,28 +16,29 @@ extern "C"
 {
 #endif
 
-#define LN_FILENAME (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+#define LN_FILENAME                                                            \
+    (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 
     void ln_panic(const char *file, int line);
 
 #define LN_PANIC() ln_panic(LN_FILENAME, __LINE__)
 
-#define LN_ASSERT(expr, on_failure)                                                                                    \
-    do {                                                                                                               \
-        if (!(expr)) {                                                                                                 \
-            on_failure;                                                                                                \
-        }                                                                                                              \
+#define LN_ASSERT(expr, on_failure)                                            \
+    do {                                                                       \
+        if (!(expr)) {                                                         \
+            on_failure;                                                        \
+        }                                                                      \
     } while (0)
 #define LN_ASSERT_PANIC(expr) LN_ASSERT(expr, LN_PANIC())
 
-#define LN_CHECK(expr, var, cond, on_failure, on_success)                                                              \
-    do {                                                                                                               \
-        const auto var = (expr);                                                                                       \
-        if (cond) {                                                                                                    \
-            on_failure;                                                                                                \
-            return var;                                                                                                \
-        }                                                                                                              \
-        on_success;                                                                                                    \
+#define LN_CHECK(expr, var, cond, on_failure, on_success)                      \
+    do {                                                                       \
+        const auto var = (expr);                                               \
+        if (cond) {                                                            \
+            on_failure;                                                        \
+            return var;                                                        \
+        }                                                                      \
+        on_success;                                                            \
     } while (0)
 
 #ifdef __cplusplus

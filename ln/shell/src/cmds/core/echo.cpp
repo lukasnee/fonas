@@ -19,7 +19,9 @@ Cmd echo_cmd{Cmd::Cfg{.cmd_list = Cmd::general_cmd_list,
                               ctx.cli.print('\n');
                               return Err::ok;
                           }
-                          ctx.cli.printf("%.*s\n", ctx.args.back().cend() - ctx.args.front().cbegin(),
+                          ctx.cli.printf("%.*s\n",
+                                         ctx.args.back().cend() -
+                                             ctx.args.front().cbegin(),
                                          ctx.args.front().data());
                           return Err::ok;
                       }}};

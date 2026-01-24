@@ -38,7 +38,8 @@ public:
      * @param timeout
      * @return true if successful, otherwise false.
      */
-    bool read(std::uint8_t *data, std::size_t size, const Timeout &timeout = Timeout::max());
+    bool read(std::uint8_t *data, std::size_t size,
+              const Timeout &timeout = Timeout::max());
 
     /**
      * @brief Write synchronously.
@@ -48,7 +49,8 @@ public:
      * @param timeout
      * @return true if successful, otherwise false.
      */
-    bool write(const std::uint8_t *data, std::size_t size, const Timeout &timeout = Timeout::max());
+    bool write(const std::uint8_t *data, std::size_t size,
+               const Timeout &timeout = Timeout::max());
 
     /**
      * @brief Write asynchronously.
@@ -58,7 +60,8 @@ public:
      * @param timeout
      * @return true if successful, otherwise false.
      */
-    bool write_async(const std::uint8_t *data, std::size_t size, const Timeout &timeout = Timeout::max());
+    bool write_async(const std::uint8_t *data, std::size_t size,
+                     const Timeout &timeout = Timeout::max());
 
     /**
      * @brief Await write_async completion.
@@ -77,8 +80,8 @@ public:
      * @param timeout
      * @return true if successful, otherwise false.
      */
-    bool read_write(std::uint8_t *rd_data, const std::uint8_t *wr_data, std::size_t size,
-                    const Timeout &timeout = Timeout::max());
+    bool read_write(std::uint8_t *rd_data, const std::uint8_t *wr_data,
+                    std::size_t size, const Timeout &timeout = Timeout::max());
 
     /**
      * @brief Deinitialize.
@@ -88,22 +91,26 @@ public:
     bool deinit();
 
     /**
-     * @brief Low-level callback signaling read completion (either ISR or thread context).
+     * @brief Low-level callback signaling read completion (either ISR or thread
+     * context).
      */
     void ll_async_read_completed_cb();
 
     /**
-     * @brief Low-level callback signaling write completion (either ISR or thread context).
+     * @brief Low-level callback signaling write completion (either ISR or
+     * thread context).
      */
     void ll_async_write_completed_cb();
 
     /**
-     * @brief Low-level callback signaling read-write (full-duplex) completion. (either ISR or thread context).
+     * @brief Low-level callback signaling read-write (full-duplex) completion.
+     * (either ISR or thread context).
      */
     void ll_async_read_write_completed_cb();
 
     /**
-     * @brief Low-level callback signaling abnormal completion (error, abort, suspend) (either ISR or thread context).
+     * @brief Low-level callback signaling abnormal completion (error, abort,
+     * suspend) (either ISR or thread context).
      */
     void ll_async_abnormal_cb();
 
@@ -141,7 +148,9 @@ protected:
      * @param size
      * @return true if successful, otherwise false.
      */
-    virtual bool ll_read_write_async(std::uint8_t *rd_data, const std::uint8_t *wr_data, std::size_t size) = 0;
+    virtual bool ll_read_write_async(std::uint8_t *rd_data,
+                                     const std::uint8_t *wr_data,
+                                     std::size_t size) = 0;
 
     /**
      * @brief Check if low-level driver is busy writing. For example, DMA Tx is

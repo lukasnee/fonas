@@ -28,7 +28,8 @@ void CLI::print(const char &c, size_t times_to_repeat) {
 }
 
 int CLI::print(std::string_view sv) {
-    const auto rc = static_cast<int>(std::fwrite(sv.data(), 1, sv.size(), this->config.ostream.c_file()));
+    const auto rc = static_cast<int>(
+        std::fwrite(sv.data(), 1, sv.size(), this->config.ostream.c_file()));
     std::fflush(this->config.ostream.c_file());
     return rc;
 }
@@ -49,7 +50,8 @@ int CLI::printf(const char *fmt, ...) {
     return chars_printed;
 }
 
-std::tuple<const Cmd *, std::span<const std::string_view>> CLI::find_cmd(std::span<const std::string_view> args) {
+std::tuple<const Cmd *, std::span<const std::string_view>> CLI::find_cmd(
+    std::span<const std::string_view> args) {
     if (args.empty()) {
         return {};
     }
@@ -66,7 +68,8 @@ std::tuple<const Cmd *, std::span<const std::string_view>> CLI::find_cmd(std::sp
             continue;
         }
         while (args.size() - arg_offset - 1) {
-            const Cmd *child_cmd = cmd->find_child_cmd_by_name(args[arg_offset + 1]);
+            const Cmd *child_cmd =
+                cmd->find_child_cmd_by_name(args[arg_offset + 1]);
             if (!child_cmd) {
                 break;
             }
@@ -135,7 +138,9 @@ Err CLI::execute(const Cmd &cmd, const std::span<const std::string_view> args,
             }
             this->print("\nFAIL");
             if (err != Err::fail) {
-                this->printf(" (%d)", static_cast<std::underlying_type_t<decltype(err)>>(err));
+                this->printf(
+                    " (%d)",
+                    static_cast<std::underlying_type_t<decltype(err)>>(err));
             }
             if (this->config.colored_output) {
                 this->print(ANSI_COLOR_RESET);
@@ -168,14 +173,16 @@ void CLI::routine() {
 
 bool CLI::execute_line(std::string_view line) {
     if (!this->input.get().empty()) {
-        if (std::ranges::equal(this->input.get(), this->history.get_current_recall_line())) {
+        if (std::ranges::equal(this->input.get(),
+                               this->history.get_current_recall_line())) {
             this->previously_called_from_history = true;
         }
         else {
             this->history.add_line(this->input.get());
         }
     }
-    std::array<std::string_view, ArgParser::Cfg::args_buf_size_default> args_buf;
+    std::array<std::string_view, ArgParser::Cfg::args_buf_size_default>
+        args_buf;
     auto opt_args = ArgParser::tokenize(line, args_buf);
     if (!opt_args) {
         this->last_err = Err::badArg;
@@ -221,7 +228,8 @@ char CLI::getc_or_handle_escape_sequences() {
         return c;
     };
     auto handle_unknown = [&]() {
-        LOG_WARNING("Unknown escape sequence: %.*s", static_cast<int>(buf_size), buf.data());
+        LOG_WARNING("Unknown escape sequence: %.*s", static_cast<int>(buf_size),
+                    buf.data());
     };
     while (true) {
         char c = getc();
@@ -434,7 +442,8 @@ bool CLI::on_ctrl_arrow_right_key() {
 
 void CLI::print_prompt(void) {
     if (this->config.colored_output) {
-        this->print(this->last_err == Err::ok ? ANSI_COLOR_GREEN : ANSI_COLOR_RED);
+        this->print(this->last_err == Err::ok ? ANSI_COLOR_GREEN
+                                              : ANSI_COLOR_RED);
     }
     this->print("> ");
     if (this->config.colored_output) {
@@ -445,11 +454,13 @@ void CLI::print_prompt(void) {
 void CLI::clear_input() {
     const size_t max_fmt_size = 8;
     std::array<char, max_fmt_size> buf;
-    std::snprintf(buf.data(), buf.size(), "\e[%zuD", this->input.get_cursor_pos());
+    std::snprintf(buf.data(), buf.size(), "\e[%zuD",
+                  this->input.get_cursor_pos());
     this->print(buf.data());
     std::snprintf(buf.data(), buf.size(), " \e[%zub", this->input.get().size());
     this->print(buf.data());
-    std::snprintf(buf.data(), buf.size(), "\e[%zuD", this->input.get().size() + 1);
+    std::snprintf(buf.data(), buf.size(), "\e[%zuD",
+                  this->input.get().size() + 1);
     this->print(buf.data());
     this->input.clear();
 }

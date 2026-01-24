@@ -25,8 +25,9 @@ namespace ln {
  */
 
 template <typename T> class RingBufferView {
-    static_assert(std::is_trivially_destructible<T>::value,
-                  "RingBufferView requires trivially destructible T for embedded safety");
+    static_assert(
+        std::is_trivially_destructible<T>::value,
+        "RingBufferView requires trivially destructible T for embedded safety");
 
 public:
     template <bool is_const> struct _iterator {
@@ -36,7 +37,8 @@ public:
         using pointer = std::conditional_t<is_const, const T *, T *>;
         using reference = std::conditional_t<is_const, const T &, T &>;
 
-        std::conditional_t<is_const, const RingBufferView *, RingBufferView *> parent;
+        std::conditional_t<is_const, const RingBufferView *, RingBufferView *>
+            parent;
         size_t index; // logical position from head
 
         reference operator*() const { return (*parent)[index]; }
@@ -81,7 +83,8 @@ public:
             return it;
         }
         difference_type operator-(const _iterator &other) const {
-            return static_cast<difference_type>(index) - static_cast<difference_type>(other.index);
+            return static_cast<difference_type>(index) -
+                   static_cast<difference_type>(other.index);
         }
 
         auto operator<=>(const _iterator &other) const = default;
@@ -92,8 +95,12 @@ public:
 
     [[nodiscard]] auto begin() noexcept { return iterator{this, 0}; }
     [[nodiscard]] auto end() noexcept { return iterator{this, this->size()}; }
-    [[nodiscard]] auto begin() const noexcept { return const_iterator{this, 0}; }
-    [[nodiscard]] auto end() const noexcept { return const_iterator{this, this->size()}; }
+    [[nodiscard]] auto begin() const noexcept {
+        return const_iterator{this, 0};
+    }
+    [[nodiscard]] auto end() const noexcept {
+        return const_iterator{this, this->size()};
+    }
 
     /**
      * @brief Construct a ring buffer over the given span.
@@ -111,7 +118,9 @@ public:
     /**
      * @brief Returns the capacity of the buffer.
      */
-    [[nodiscard]] size_t capacity() const noexcept { return this->storage.size(); }
+    [[nodiscard]] size_t capacity() const noexcept {
+        return this->storage.size();
+    }
 
     /**
      * @brief Returns true if no elements are stored.
@@ -121,12 +130,16 @@ public:
     /**
      * @brief Returns true if the buffer cannot accept more elements.
      */
-    [[nodiscard]] bool full() const noexcept { return this->count == this->storage.size(); }
+    [[nodiscard]] bool full() const noexcept {
+        return this->count == this->storage.size();
+    }
 
     /**
      * @brief Returns how many elements can still be inserted.
      */
-    [[nodiscard]] size_t get_free_space() const noexcept { return this->capacity() - this->count; }
+    [[nodiscard]] size_t get_free_space() const noexcept {
+        return this->capacity() - this->count;
+    }
 
     /**
      * @brief Remove all elements from the buffer.
@@ -159,9 +172,12 @@ public:
         return true;
     }
 
-    bool push_overwrite(const T &value) noexcept { return this->push(value, PushMode::overwrite); }
+    bool push_overwrite(const T &value) noexcept {
+        return this->push(value, PushMode::overwrite);
+    }
 
-    bool push(const std::span<const T> &values, PushMode mode = PushMode::normal) noexcept {
+    bool push(const std::span<const T> &values,
+              PushMode mode = PushMode::normal) noexcept {
         size_t to_push = values.size();
         if (to_push == 0) {
             return true;
@@ -182,20 +198,25 @@ public:
             this->advance_tail(to_push);
         }
         else {
-            std::copy_n(values.data(), first_chunk_size, &this->storage[this->tail]);
+            std::copy_n(values.data(), first_chunk_size,
+                        &this->storage[this->tail]);
             size_t second_chunk_size = to_push - first_chunk_size;
-            std::copy_n(values.data() + first_chunk_size, second_chunk_size, &this->storage[0]);
+            std::copy_n(values.data() + first_chunk_size, second_chunk_size,
+                        &this->storage[0]);
             this->advance_tail(to_push);
         }
         return true;
     }
 
-    bool push_overwrite(const std::span<const T> &values) noexcept { return this->push(values, PushMode::overwrite); }
+    bool push_overwrite(const std::span<const T> &values) noexcept {
+        return this->push(values, PushMode::overwrite);
+    }
 
     /**
      * @brief Pop the oldest element.
      *
-     * @return std::optional containing the value, or std::nullopt if the buffer is empty.
+     * @return std::optional containing the value, or std::nullopt if the buffer
+     * is empty.
      */
     [[nodiscard]] std::optional<T> pop() noexcept {
         if (this->empty()) {
@@ -255,7 +276,9 @@ private:
         this->count += step;
     }
 
-    void advance(size_t &index, size_t step) noexcept { index = (index + step) % storage.size(); }
+    void advance(size_t &index, size_t step) noexcept {
+        index = (index + step) % storage.size();
+    }
 
     std::span<T> storage;
     size_t head; // index of oldest element

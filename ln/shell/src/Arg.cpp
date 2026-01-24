@@ -14,7 +14,8 @@
 #include <cstddef>
 
 namespace ln::shell {
-template <typename T> std::optional<T> from_chars_auto_base(std::string_view str) {
+template <typename T>
+std::optional<T> from_chars_auto_base(std::string_view str) {
     T value = 0;
     enum Base : size_t {
         dec = 10,
@@ -25,20 +26,26 @@ template <typename T> std::optional<T> from_chars_auto_base(std::string_view str
         base = Base::hex;
         str.remove_prefix(2);
     }
-    const auto [ptr, ec] = std::from_chars(str.data(), str.data() + str.length(), value, base);
+    const auto [ptr, ec] =
+        std::from_chars(str.data(), str.data() + str.length(), value, base);
     if (ec != std::errc() || ptr != str.data() + str.length()) {
         return std::nullopt;
     }
     return value;
 }
 
-std::optional<uint32_t> Arg::as_u32() const { return from_chars_auto_base<uint32_t>(this->value); }
+std::optional<uint32_t> Arg::as_u32() const {
+    return from_chars_auto_base<uint32_t>(this->value);
+}
 
-std::optional<int32_t> Arg::as_i32() const { return from_chars_auto_base<int32_t>(this->value); }
+std::optional<int32_t> Arg::as_i32() const {
+    return from_chars_auto_base<int32_t>(this->value);
+}
 
 std::optional<float> Arg::as_f32() const {
     float value = 0.0;
-    const auto [ptr, ec] = std::from_chars(this->value.data(), this->value.data() + this->value.length(), value);
+    const auto [ptr, ec] = std::from_chars(
+        this->value.data(), this->value.data() + this->value.length(), value);
     if (ec != std::errc() || ptr != this->value.data() + this->value.length()) {
         return std::nullopt;
     }
@@ -47,14 +54,17 @@ std::optional<float> Arg::as_f32() const {
 
 std::optional<double> Arg::as_f64() const {
     double value = 0.0;
-    const auto [ptr, ec] = std::from_chars(this->value.data(), this->value.data() + this->value.length(), value);
+    const auto [ptr, ec] = std::from_chars(
+        this->value.data(), this->value.data() + this->value.length(), value);
     if (ec != std::errc() || ptr != this->value.data() + this->value.length()) {
         return std::nullopt;
     }
     return value;
 }
 
-bool Arg::is_alpha(char c) { return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'); }
+bool Arg::is_alpha(char c) {
+    return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
+}
 
 bool Arg::is_flag(const std::string_view arg) {
     if (arg.length() < 2) {

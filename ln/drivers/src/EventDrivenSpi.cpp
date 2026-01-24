@@ -23,7 +23,9 @@ bool EventDrivenSpi::ll_ensure_write_readiness(const Timeout &timeout) {
         if (!this->ll_busy_writing()) {
             return true;
         }
-        if (this->write_semaphore.take(std::min(timeout.left(), {10ms})) == pdTRUE && !this->ll_busy_writing()) {
+        if (this->write_semaphore.take(std::min(timeout.left(), {10ms})) ==
+                pdTRUE &&
+            !this->ll_busy_writing()) {
             return true;
         }
     }
@@ -35,14 +37,17 @@ bool EventDrivenSpi::ll_ensure_read_readiness(const Timeout &timeout) {
         if (!this->ll_busy_reading()) {
             return true;
         }
-        if (this->read_semaphore.take(std::min(timeout.left(), {10ms})) == pdTRUE && !this->ll_busy_reading()) {
+        if (this->read_semaphore.take(std::min(timeout.left(), {10ms})) ==
+                pdTRUE &&
+            !this->ll_busy_reading()) {
             return true;
         }
     }
     return false;
 }
 
-bool EventDrivenSpi::read(std::uint8_t *data, std::size_t size, const Timeout &timeout) {
+bool EventDrivenSpi::read(std::uint8_t *data, std::size_t size,
+                          const Timeout &timeout) {
     if (size == 0) {
         return true;
     }
@@ -62,7 +67,8 @@ bool EventDrivenSpi::read(std::uint8_t *data, std::size_t size, const Timeout &t
     return true;
 }
 
-bool EventDrivenSpi::write(const std::uint8_t *data, std::size_t size, const Timeout &timeout) {
+bool EventDrivenSpi::write(const std::uint8_t *data, std::size_t size,
+                           const Timeout &timeout) {
     if (size == 0) {
         return true;
     }
@@ -82,7 +88,8 @@ bool EventDrivenSpi::write(const std::uint8_t *data, std::size_t size, const Tim
     return true;
 }
 
-bool EventDrivenSpi::write_async(const std::uint8_t *data, std::size_t size, const Timeout &timeout) {
+bool EventDrivenSpi::write_async(const std::uint8_t *data, std::size_t size,
+                                 const Timeout &timeout) {
     if (size == 0) {
         return true;
     }
@@ -110,7 +117,8 @@ bool EventDrivenSpi::write_await(const Timeout &timeout) {
     return true;
 }
 
-bool EventDrivenSpi::read_write(std::uint8_t *rd_data, const std::uint8_t *wr_data, std::size_t size,
+bool EventDrivenSpi::read_write(std::uint8_t *rd_data,
+                                const std::uint8_t *wr_data, std::size_t size,
                                 const Timeout &timeout) {
     if (size == 0) {
         return true;
@@ -144,7 +152,8 @@ bool EventDrivenSpi::deinit() { return this->ll_deinit(); }
 
 void EventDrivenSpi::ll_async_complete_common_signal() {
     bool higherPriorityTaskWoken = pdFALSE;
-    const auto is_inside_interrupt = FreeRTOS::Addons::Kernel::isInsideInterrupt();
+    const auto is_inside_interrupt =
+        FreeRTOS::Addons::Kernel::isInsideInterrupt();
     if (is_inside_interrupt) {
         this->write_semaphore.giveFromISR(higherPriorityTaskWoken);
     }
@@ -157,8 +166,16 @@ void EventDrivenSpi::ll_async_complete_common_signal() {
     /// @attention FreeRTOS::Kernel::yieldFromISR() must be called last!
 }
 
-void EventDrivenSpi::ll_async_read_completed_cb() { this->ll_async_complete_common_signal(); }
-void EventDrivenSpi::ll_async_write_completed_cb() { this->ll_async_complete_common_signal(); }
-void EventDrivenSpi::ll_async_read_write_completed_cb() { this->ll_async_complete_common_signal(); }
-void EventDrivenSpi::ll_async_abnormal_cb() { this->ll_async_complete_common_signal(); }
+void EventDrivenSpi::ll_async_read_completed_cb() {
+    this->ll_async_complete_common_signal();
+}
+void EventDrivenSpi::ll_async_write_completed_cb() {
+    this->ll_async_complete_common_signal();
+}
+void EventDrivenSpi::ll_async_read_write_completed_cb() {
+    this->ll_async_complete_common_signal();
+}
+void EventDrivenSpi::ll_async_abnormal_cb() {
+    this->ll_async_complete_common_signal();
+}
 } // namespace ln::drivers

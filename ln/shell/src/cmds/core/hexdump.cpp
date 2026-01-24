@@ -35,8 +35,14 @@ void hexdump(CLI &cli, const uint32_t &address, const size_t &size) {
 }
 
 static constexpr std::array<Arg, 2> cmd_hexdump_args{{
-    Arg{.role = Arg::Role::positional, .name = "address", .type = Arg::Type::num, .description = "Starting address"},
-    Arg{.role = Arg::Role::positional, .name = "size", .type = Arg::Type::num, .description = "Size to print in bytes"},
+    Arg{.role = Arg::Role::positional,
+        .name = "address",
+        .type = Arg::Type::num,
+        .description = "Starting address"},
+    Arg{.role = Arg::Role::positional,
+        .name = "size",
+        .type = Arg::Type::num,
+        .description = "Size to print in bytes"},
 }};
 
 Cmd cmd_hexdump{Cmd::Cfg{.cmd_list = Cmd::general_cmd_list,
@@ -47,12 +53,14 @@ Cmd cmd_hexdump{Cmd::Cfg{.cmd_list = Cmd::general_cmd_list,
                              if (ctx.args.size() != 2) {
                                  return Err::fail;
                              }
-                             auto opt_address = ctx.argp.get_positional(0).as_u32();
+                             auto opt_address =
+                                 ctx.argp.get_positional(0).as_u32();
                              if (!opt_address.has_value()) {
                                  return Err::badArg;
                              }
                              auto address = *opt_address;
-                             auto opt_size = ctx.argp.get_positional(1).as_u32();
+                             auto opt_size =
+                                 ctx.argp.get_positional(1).as_u32();
                              if (!opt_size.has_value()) {
                                  return Err::badArg;
                              }

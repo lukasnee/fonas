@@ -22,7 +22,8 @@ public:
     History(std::span<char> history_buf) : ring_buffer(history_buf) {}
 
     void add_line(std::string_view line);
-    std::ranges::subrange<ln::RingBufferView<char>::iterator> get_current_recall_line();
+    std::ranges::subrange<ln::RingBufferView<char>::iterator>
+    get_current_recall_line();
     std::ranges::subrange<ln::RingBufferView<char>::iterator> recall_previous();
     std::ranges::subrange<ln::RingBufferView<char>::iterator> recall_next();
 

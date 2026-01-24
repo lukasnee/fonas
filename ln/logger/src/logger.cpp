@@ -18,15 +18,17 @@
 
 namespace ln::logger {
 
-extern "C" void ln_logger_log(LoggerModule *module, LoggerLevel level, const char *fmt, ...) {
+extern "C" void ln_logger_log(LoggerModule *module, LoggerLevel level,
+                              const char *fmt, ...) {
     if (!module) {
         return;
     }
     if (!Logger::is_enabled()) {
         return;
     }
-    if (level < (module->log_level == LOGGER_LEVEL_NOTSET ? Logger::get_instance().get_config().log_level
-                                                          : module->log_level)) {
+    if (level < (module->log_level == LOGGER_LEVEL_NOTSET
+                     ? Logger::get_instance().get_config().log_level
+                     : module->log_level)) {
         return;
     }
     va_list arg_list;
@@ -50,9 +52,14 @@ Logger &Logger::get_instance() {
 
 Logger &get_instance() { return Logger::get_instance(); }
 
-bool Logger::is_enabled() { return Config::enabled_compile_time && get_instance().config.enabled_run_time; }
+bool Logger::is_enabled() {
+    return Config::enabled_compile_time &&
+           get_instance().config.enabled_run_time;
+}
 
-extern "C" void ln_logger_flush_buffer() { Logger::get_instance().flush_buffer(); }
+extern "C" void ln_logger_flush_buffer() {
+    Logger::get_instance().flush_buffer();
+}
 
 void Logger::flush_buffer() {
     if (FreeRTOS::Addons::Kernel::isInsideInterrupt()) {
@@ -70,7 +77,8 @@ void Logger::clear_buffer_unsafe() {
 }
 
 void Logger::flush_buffer_unsafe() {
-    std::fwrite(this->buff_mem.data(), 1, std::min(strlen(this->buff_mem.data()), this->buff_mem.size()),
+    std::fwrite(this->buff_mem.data(), 1,
+                std::min(strlen(this->buff_mem.data()), this->buff_mem.size()),
                 this->config.out_file.c_file());
     this->clear_buffer_unsafe();
 }
@@ -92,7 +100,9 @@ void Module::log(const Level &level, const std::string_view fmt, ...) {
     if (!Logger::is_enabled()) {
         return;
     }
-    if (level < (this->log_level == LOGGER_LEVEL_NOTSET ? Logger::get_instance().config.log_level : this->log_level)) {
+    if (level < (this->log_level == LOGGER_LEVEL_NOTSET
+                     ? Logger::get_instance().config.log_level
+                     : this->log_level)) {
         return;
     }
     va_list arg_list;
@@ -103,34 +113,40 @@ void Module::log(const Level &level, const std::string_view fmt, ...) {
 
 void Module::set_level(Level log_level) { this->log_level = log_level; }
 
-int Logger::log(const LoggerModule &module, const Logger::Level &level, const std::string_view fmt,
-                const va_list &arg_list) {
-    const auto is_interrupt_context = FreeRTOS::Addons::Kernel::isInsideInterrupt();
+int Logger::log(const LoggerModule &module, const Logger::Level &level,
+                const std::string_view fmt, const va_list &arg_list) {
+    const auto is_interrupt_context =
+        FreeRTOS::Addons::Kernel::isInsideInterrupt();
     if (!is_interrupt_context && !this->mutex.lock()) {
         return 0;
     }
     const auto rc = this->log_unsafe(module, level, fmt, arg_list);
     if (!is_interrupt_context) {
-        if (strlen(this->buff_mem.data()) > Config::out_buffer_auto_flush_threshold) {
+        if (strlen(this->buff_mem.data()) >
+            Config::out_buffer_auto_flush_threshold) {
             this->flush_buffer_unsafe();
         }
         this->mutex.unlock();
     }
     return rc;
 }
-int Logger::log_unsafe(const LoggerModule &module, const Logger::Level &level, const std::string_view fmt,
-                       const va_list &arg_list) {
+int Logger::log_unsafe(const LoggerModule &module, const Logger::Level &level,
+                       const std::string_view fmt, const va_list &arg_list) {
     ln::File buff_file(this->buff_mem, "a+");
     int chars_printed = 0;
     if (this->config.print_header_enabled) {
-        LN_CHECK(this->print_header(buff_file, module, level), rc, rc < 0, { chars_printed += rc; }, {});
+        LN_CHECK(this->print_header(buff_file, module, level), rc, rc < 0,
+                 { chars_printed += rc; }, {});
     }
-    LN_CHECK(vfprintf(buff_file.c_file(), fmt.data(), arg_list), rc, rc < 0, { chars_printed += rc; }, {});
-    LN_CHECK(fprintf(buff_file.c_file(), "%s", this->config.eol), rc, rc < 0, { chars_printed += rc; }, {});
+    LN_CHECK(vfprintf(buff_file.c_file(), fmt.data(), arg_list), rc, rc < 0,
+             { chars_printed += rc; }, {});
+    LN_CHECK(fprintf(buff_file.c_file(), "%s", this->config.eol), rc, rc < 0,
+             { chars_printed += rc; }, {});
     return chars_printed;
 }
 
-int Logger::print_header(ln::File &file, const LoggerModule &module, const Logger::Level &level) const {
+int Logger::print_header(ln::File &file, const LoggerModule &module,
+                         const Logger::Level &level) const {
 
 #define ANSI_COLOR_BLACK "\e[30m"
 #define ANSI_COLOR_RED "\e[31m"
@@ -157,14 +173,20 @@ int Logger::print_header(ln::File &file, const LoggerModule &module, const Logge
     using Clock = FreeRTOS::Addons::Clock;
     const auto [tm_buf, sec_remainder] = Clock::to_utc_tm_rem(Clock::now());
     char datetime_buffer[sizeof("YYYY-MM-DD HH:MM:SS")];
-    const auto ms = static_cast<uint32_t>(std::chrono::duration_cast<std::chrono::milliseconds>(sec_remainder).count());
-    std::strftime(datetime_buffer, sizeof(datetime_buffer), "%Y-%m-%d %H:%M:%S", &tm_buf);
-    const auto current_task_name = FreeRTOS::Addons::Kernel::getCurrentTaskName();
-    return Logger::printf(file, "%s.%03lu|%s%s%s|%s%s|%s|", datetime_buffer, ms,
-                          (this->config.color ? level_descrs[level_descr_idx].color.data() : ""),
-                          level_descrs[level_descr_idx].tag_name.data(), (this->config.color ? ANSI_COLOR_DEFAULT : ""),
-                          (FreeRTOS::Addons::Kernel::isInsideInterrupt() ? "ISR!" : ""),
-                          (current_task_name ? current_task_name : "-"), module.name);
+    const auto ms = static_cast<uint32_t>(
+        std::chrono::duration_cast<std::chrono::milliseconds>(sec_remainder)
+            .count());
+    std::strftime(datetime_buffer, sizeof(datetime_buffer), "%Y-%m-%d %H:%M:%S",
+                  &tm_buf);
+    const auto current_task_name =
+        FreeRTOS::Addons::Kernel::getCurrentTaskName();
+    return Logger::printf(
+        file, "%s.%03lu|%s%s%s|%s%s|%s|", datetime_buffer, ms,
+        (this->config.color ? level_descrs[level_descr_idx].color.data() : ""),
+        level_descrs[level_descr_idx].tag_name.data(),
+        (this->config.color ? ANSI_COLOR_DEFAULT : ""),
+        (FreeRTOS::Addons::Kernel::isInsideInterrupt() ? "ISR!" : ""),
+        (current_task_name ? current_task_name : "-"), module.name);
 }
 
 int Logger::printf(ln::File &file, const char *fmt, ...) {

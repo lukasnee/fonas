@@ -16,7 +16,8 @@ namespace ln::shell::generic::cmds {
 
 static constexpr const char *on_off_command_usage = "<on|off>";
 
-Err on_off_command_parser(std::function<bool(bool)> on_off_fn, const char *ctrl_name, Cmd::Ctx ctx);
+Err on_off_command_parser(std::function<bool(bool)> on_off_fn,
+                          const char *ctrl_name, Cmd::Ctx ctx);
 Err on_off_command_parser(bool &dst_state, const char *ctrl_name, Cmd::Ctx ctx);
 
 } // namespace ln::shell::generic::cmds

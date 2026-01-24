@@ -21,20 +21,26 @@ ln::StaticForwardList<Cmd> Cmd::global_cmd_list = {};
 
 Cmd::Cmd(Cfg cfg) : cfg{std::move(cfg)} {
 
-    auto &cmd_list = this->cfg.parent_cmd ? this->cfg.parent_cmd->children_cmd_list : this->cfg.cmd_list;
+    auto &cmd_list = this->cfg.parent_cmd
+                         ? this->cfg.parent_cmd->children_cmd_list
+                         : this->cfg.cmd_list;
     cmd_list.push_front(*this);
 }
 
-static bool matches_any_token(std::string_view str_token, const char *str_tokens) {
+static bool matches_any_token(std::string_view str_token,
+                              const char *str_tokens) {
     const char *str_this_token = str_tokens;
-    for (const char *str_char_it = str_this_token; *str_char_it != '\0'; str_char_it++) {
+    for (const char *str_char_it = str_this_token; *str_char_it != '\0';
+         str_char_it++) {
         const bool it_at_last_char = (*(str_char_it + 1) == '\0');
         if (*str_char_it != ',' && !it_at_last_char) {
             continue;
         }
-        const std::size_t this_token_length = str_char_it + (it_at_last_char ? 1 : 0) - str_this_token;
+        const std::size_t this_token_length =
+            str_char_it + (it_at_last_char ? 1 : 0) - str_this_token;
         if (str_token.size() == this_token_length &&
-            0 == std::strncmp(str_token.data(), str_this_token, this_token_length)) {
+            0 == std::strncmp(str_token.data(), str_this_token,
+                              this_token_length)) {
             return true;
         }
         if (*str_char_it == ',') {
@@ -44,7 +50,8 @@ static bool matches_any_token(std::string_view str_token, const char *str_tokens
     return false;
 }
 
-const Cmd *Cmd::find_cmd_by_name(ln::StaticForwardList<Cmd> cmd_list, std::string_view name) {
+const Cmd *Cmd::find_cmd_by_name(ln::StaticForwardList<Cmd> cmd_list,
+                                 std::string_view name) {
     for (const auto &cmd : cmd_list) {
         if (matches_any_token(name, cmd.cfg.name)) {
             return &cmd;
@@ -62,7 +69,8 @@ const Cmd *Cmd::find_child_cmd_by_name(std::string_view name) const {
     return nullptr;
 }
 
-void Cmd::print_short_help(CLI &cli, std::size_t max_depth, std::size_t depth) const {
+void Cmd::print_short_help(CLI &cli, std::size_t max_depth,
+                           std::size_t depth) const {
     const auto top_level_call = depth == 0;
     if (top_level_call) {
         /* Top-level call of this function considers max_depth and depth
@@ -139,7 +147,8 @@ std::size_t Cmd::resolve_cmd_depth() const {
     return depth;
 }
 
-void Cmd::print_long_help(CLI &cli, std::size_t max_depth, std::size_t depth) const {
+void Cmd::print_long_help(CLI &cli, std::size_t max_depth,
+                          std::size_t depth) const {
     const auto top_level_call = depth == 0;
     if (top_level_call) {
         /* Top-level call of this function considers max_depth and depth
@@ -164,36 +173,38 @@ void Cmd::print_long_help(CLI &cli, std::size_t max_depth, std::size_t depth) co
     }
 }
 
-Cmd cmd_help{Cmd::Cfg{.cmd_list = Cmd::base_cmd_list,
-                      .name = "help,?",
-                      .usage = "[<cmd_name:str>][--all]",
-                      .short_description = "show help information about commands",
-                      .fn = [](Cmd::Ctx ctx) {
-                          const std::size_t depth_of_all = 7;
-                          // TODO: proper abstraction to parse optional args
-                          using namespace std::literals::string_view_literals;
-                          const bool all = ctx.args.back() == "--all"sv;
-                          const auto cmd_args = all ? ctx.args.subspan(0, ctx.args.size() - 1) : ctx.args;
-                          if (cmd_args.empty()) {
-                              for (const auto &cmd_list_ptr : ctx.cli.config.cmd_lists) {
-                                  if (!cmd_list_ptr) {
-                                      continue;
-                                  }
-                                  for (const auto &cmd : *cmd_list_ptr) {
-                                      cmd.print_short_help(ctx.cli, all ? depth_of_all : 0);
-                                  }
-                              }
-                              return Err::ok;
-                          }
-                          if (cmd_args.empty()) {
-                              return Err::badArg;
-                          }
-                          auto [cmd, _] = ctx.cli.find_cmd(ctx.args);
-                          if (cmd) {
-                              cmd->print_long_help(ctx.cli, all ? depth_of_all : 1);
-                              return Err::ok;
-                          }
-                          return Err::unknownCmd;
-                      }}};
+Cmd cmd_help{Cmd::Cfg{
+    .cmd_list = Cmd::base_cmd_list,
+    .name = "help,?",
+    .usage = "[<cmd_name:str>][--all]",
+    .short_description = "show help information about commands",
+    .fn = [](Cmd::Ctx ctx) {
+        const std::size_t depth_of_all = 7;
+        // TODO: proper abstraction to parse optional args
+        using namespace std::literals::string_view_literals;
+        const bool all = ctx.args.back() == "--all"sv;
+        const auto cmd_args =
+            all ? ctx.args.subspan(0, ctx.args.size() - 1) : ctx.args;
+        if (cmd_args.empty()) {
+            for (const auto &cmd_list_ptr : ctx.cli.config.cmd_lists) {
+                if (!cmd_list_ptr) {
+                    continue;
+                }
+                for (const auto &cmd : *cmd_list_ptr) {
+                    cmd.print_short_help(ctx.cli, all ? depth_of_all : 0);
+                }
+            }
+            return Err::ok;
+        }
+        if (cmd_args.empty()) {
+            return Err::badArg;
+        }
+        auto [cmd, _] = ctx.cli.find_cmd(ctx.args);
+        if (cmd) {
+            cmd->print_long_help(ctx.cli, all ? depth_of_all : 1);
+            return Err::ok;
+        }
+        return Err::unknownCmd;
+    }}};
 
 } // namespace ln::shell

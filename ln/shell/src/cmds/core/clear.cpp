@@ -11,13 +11,15 @@
 
 namespace ln::shell {
 
-Cmd clear_cmd{Cmd::Cfg{
-    .cmd_list = Cmd::general_cmd_list, .name = "clear,c", .short_description = "clear screen", .fn = [](Cmd::Ctx ctx) {
-        const size_t num_lines = 0x30;
-        for (size_t i = 0; i < num_lines; i++) {
-            ctx.cli.print('\n');
-        }
-        return Err::ok;
-    }}};
+Cmd clear_cmd{Cmd::Cfg{.cmd_list = Cmd::general_cmd_list,
+                       .name = "clear,c",
+                       .short_description = "clear screen",
+                       .fn = [](Cmd::Ctx ctx) {
+                           const size_t num_lines = 0x30;
+                           for (size_t i = 0; i < num_lines; i++) {
+                               ctx.cli.print('\n');
+                           }
+                           return Err::ok;
+                       }}};
 
 } // namespace ln::shell

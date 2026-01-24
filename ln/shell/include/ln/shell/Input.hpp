@@ -27,7 +27,9 @@ public:
 
     void clear();
 
-    [[nodiscard]] std::string_view get() const { return std::string_view{this->line_buf.data(), this->chars_used}; }
+    [[nodiscard]] std::string_view get() const {
+        return std::string_view{this->line_buf.data(), this->chars_used};
+    }
     [[nodiscard]] size_t get_cursor_pos() const { return this->cursor_idx; }
 
     [[nodiscard]] bool is_full() const;

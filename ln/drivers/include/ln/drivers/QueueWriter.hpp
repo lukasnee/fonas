@@ -18,10 +18,13 @@ namespace ln::drivers {
 
 class QueueWriter : public FreeRTOS::Task {
 public:
-    QueueWriter(UBaseType_t size, const char *name, configSTACK_DEPTH_TYPE stack_depth, UBaseType_t priority)
+    QueueWriter(UBaseType_t size, const char *name,
+                configSTACK_DEPTH_TYPE stack_depth, UBaseType_t priority)
         : FreeRTOS::Task(priority, stack_depth, name), queue(size) {}
 
-    bool write_in(const uint8_t &byte) { return this->queue.sendToBack(byte, portMAX_DELAY); }
+    bool write_in(const uint8_t &byte) {
+        return this->queue.sendToBack(byte, portMAX_DELAY);
+    }
 
 protected:
     virtual void write_out(const uint8_t &byte) = 0;
