@@ -83,7 +83,7 @@ Err History::cmd_history_fn(Cmd::Ctx ctx) {
 };
 
 Cmd History::cmd_history =
-    Cmd{Cmd::Cfg{.cmd_list = Cmd::base_cmd_list,
+    Cmd{Cmd::Cfg{.cmd_list = Cmd::get_base_cmd_list(),
                  .name = "history,hist",
                  .short_description = "print command history",
                  .fn = [](Cmd::Ctx ctx) {

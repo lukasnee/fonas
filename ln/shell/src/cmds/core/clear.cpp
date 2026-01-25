@@ -11,7 +11,7 @@
 
 namespace ln::shell {
 
-Cmd clear_cmd{Cmd::Cfg{.cmd_list = Cmd::general_cmd_list,
+Cmd clear_cmd{Cmd::Cfg{.cmd_list = Cmd::get_general_cmd_list(),
                        .name = "clear,c",
                        .short_description = "clear screen",
                        .fn = [](Cmd::Ctx ctx) {

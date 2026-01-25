@@ -27,15 +27,11 @@ std::string_view to_string(Err err) {
     return "unknown";
 }
 
-ln::StaticForwardList<Cmd> Cmd::base_cmd_list = {};
-ln::StaticForwardList<Cmd> Cmd::general_cmd_list = {};
-ln::StaticForwardList<Cmd> Cmd::global_cmd_list = {};
-
 Cmd::Cmd(Cfg cfg) : cfg{std::move(cfg)} {
 
     auto &cmd_list = this->cfg.parent_cmd
                          ? this->cfg.parent_cmd->children_cmd_list
-                         : this->cfg.cmd_list;
+                         : this->cfg.cmd_list.data;
     cmd_list.push_front(*this);
 }
 
@@ -62,9 +58,8 @@ static bool matches_any_token(std::string_view str_token,
     return false;
 }
 
-const Cmd *Cmd::find_cmd_by_name(ln::StaticForwardList<Cmd> cmd_list,
-                                 std::string_view name) {
-    for (const auto &cmd : cmd_list) {
+const Cmd *Cmd::find_cmd_by_name(List cmd_list, std::string_view name) {
+    for (const auto &cmd : cmd_list.data) {
         if (matches_any_token(name, cmd.cfg.name)) {
             return &cmd;
         }
@@ -81,6 +76,14 @@ const Cmd *Cmd::find_child_cmd_by_name(std::string_view name) const {
     return nullptr;
 }
 
+void Cmd::List::print_short_help(CLI &cli, std::size_t max_depth) const {
+    cli.printf("%.*s commands:\n", static_cast<int>(this->name.size()),
+               this->name.data());
+    for (const auto &cmd : this->data) {
+        cmd.print_short_help(cli, max_depth);
+    }
+}
+
 void Cmd::print_short_help(CLI &cli, std::size_t max_depth,
                            std::size_t depth) const {
     const auto top_level_call = depth == 0;
@@ -93,6 +96,7 @@ void Cmd::print_short_help(CLI &cli, std::size_t max_depth,
         max_depth += curr_cmd_depth;
         depth += curr_cmd_depth;
     }
+    printf("  ");
     for (std::size_t i = depth; i > 0; i--) {
         auto cmd = this;
         for (std::size_t j = 0; j < i; j++) {
@@ -186,7 +190,7 @@ void Cmd::print_long_help(CLI &cli, std::size_t max_depth,
 }
 
 Cmd cmd_help{Cmd::Cfg{
-    .cmd_list = Cmd::base_cmd_list,
+    .cmd_list = Cmd::get_base_cmd_list(),
     .name = "help,?",
     .usage = "[<cmd_name:str>][--all]",
     .short_description = "show help information about commands",
@@ -202,9 +206,7 @@ Cmd cmd_help{Cmd::Cfg{
                 if (!cmd_list_ptr) {
                     continue;
                 }
-                for (const auto &cmd : *cmd_list_ptr) {
-                    cmd.print_short_help(ctx.cli, all ? depth_of_all : 0);
-                }
+                cmd_list_ptr->print_short_help(ctx.cli, all ? depth_of_all : 0);
             }
             return Err::ok;
         }

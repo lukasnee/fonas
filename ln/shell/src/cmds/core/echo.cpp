@@ -11,7 +11,7 @@
 
 namespace ln::shell {
 
-Cmd echo_cmd{Cmd::Cfg{.cmd_list = Cmd::general_cmd_list,
+Cmd echo_cmd{Cmd::Cfg{.cmd_list = Cmd::get_general_cmd_list(),
                       .name = "echo",
                       .short_description = "echos typed content",
                       .fn = [](Cmd::Ctx ctx) {

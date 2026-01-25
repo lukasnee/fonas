@@ -54,7 +54,7 @@ private:
 // TODO: implement quotes for allowing multiple COMMAND arguments with spaces
 // etc.
 Cmd repeat{Cmd::Cfg{
-    .cmd_list = Cmd::general_cmd_list,
+    .cmd_list = Cmd::get_general_cmd_list(),
     .name = "repeat,r",
     .usage = "<period_ms:u32> <expr:str>",
     .short_description = "repeat command at a given period",

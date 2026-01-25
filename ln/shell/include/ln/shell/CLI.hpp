@@ -50,10 +50,10 @@ public:
         bool colored_output = true;
         bool print_result_tags = false;
         Interpreter *interpreter = nullptr;
-        static inline std::array<ln::StaticForwardList<Cmd> *, 3>
-            default_cmd_lists = {&Cmd::base_cmd_list, &Cmd::general_cmd_list,
-                                 &Cmd::global_cmd_list};
-        std::span<ln::StaticForwardList<Cmd> *> cmd_lists = default_cmd_lists;
+        static inline std::array<Cmd::List *, 3> default_cmd_lists = {
+            &Cmd::get_base_cmd_list(), &Cmd::get_general_cmd_list(),
+            &Cmd::get_global_cmd_list()};
+        std::span<Cmd::List *> cmd_lists = default_cmd_lists;
     } config;
 
     explicit CLI(std::span<char> input_line_buf,

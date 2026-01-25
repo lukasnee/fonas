@@ -45,7 +45,7 @@ static constexpr std::array<Arg, 2> cmd_hexdump_args{{
         .description = "Size to print in bytes"},
 }};
 
-Cmd cmd_hexdump{Cmd::Cfg{.cmd_list = Cmd::general_cmd_list,
+Cmd cmd_hexdump{Cmd::Cfg{.cmd_list = Cmd::get_general_cmd_list(),
                          .name = "hexdump,hd",
                          .args = cmd_hexdump_args,
                          .short_description = "hex dump",
