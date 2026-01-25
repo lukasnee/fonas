@@ -38,7 +38,7 @@ extern "C"
     void ln_logger_enable();
 
     void ln_logger_log(LoggerModule *module, LoggerLevel level, const char *fmt,
-                       ...);
+                       ...) __attribute__((__format__(__printf__, 3, 4)));
 
     void ln_logger_flush_buffer();
 
