@@ -19,9 +19,15 @@ public:
         ok,
         compileError,
         runtimeError,
-        expectingMoreInput
+        incomplete /// Line is incomplete, expects more input.
     };
 
+    /**
+     * @brief Interpret a line of input in REPL (read-eval-print loop) fashion.
+     *
+     * @param line Line of input to interpret.
+     * @return Err Result of interpretation.
+     */
     virtual Err interpret_line(std::string_view line) = 0;
 };
 

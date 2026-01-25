@@ -173,7 +173,7 @@ void CLI::routine() {
             }
             if (this->config.interpreter) {
                 const auto err = this->config.interpreter->interpret_line(line);
-                if (err == Interpreter::Err::expectingMoreInput) {
+                if (err == Interpreter::Err::incomplete) {
                     this->last_err = Err::incomplete;
                     this->input.insert('\n');
                     this->print_prompt();
