@@ -165,18 +165,27 @@ void CLI::routine() {
             this->print("\r\n");
             auto line = this->input.get();
             this->add_line_to_history(line);
-            this->last_err = this->execute_line(line);
-            if (this->last_err != Err::unknownCmd) {
-                this->input.clear();
-                this->print_prompt();
-                continue;
+            if (this->mode == Mode::command) {
+                this->last_err = this->execute_line(line);
+                if (this->last_err == Err::unknownCmd) {
+                    if (this->config.colored_output) {
+                        this->print(ANSI_COLOR_RED);
+                    }
+                    this->print("command not found\n");
+                    if (this->config.colored_output) {
+                        this->print(ANSI_COLOR_RESET);
+                    }
+                }
             }
-            if (this->config.interpreter) {
+            else if (this->mode == Mode::interpreter) {
+                if (!this->config.interpreter) {
+                    this->print("No interpreter configured.\n");
+                }
                 const auto err = this->config.interpreter->interpret_line(line);
                 if (err == Interpreter::Err::incomplete) {
                     this->last_err = Err::incomplete;
                     this->input.insert('\n');
-                    this->print_prompt();
+                    this->print_prompt_multiline();
                     continue;
                 }
                 if (err == Interpreter::Err::ok) {
@@ -189,17 +198,9 @@ void CLI::routine() {
                 else {
                     this->last_err = Err::unexpected;
                 }
-                this->input.clear();
-                this->print_prompt();
-                continue;
             }
-            if (this->config.colored_output) {
-                this->print(ANSI_COLOR_RED);
-            }
-            this->print("command not found\n");
-            if (this->config.colored_output) {
-                this->print(ANSI_COLOR_RESET);
-            }
+            this->input.clear();
+            this->print_prompt();
         }
     }
 }
@@ -249,6 +250,24 @@ char CLI::getc_or_handle_escape_sequences() {
     };
     while (true) {
         char c = getc();
+        if (c == '\x1A') {
+            if (this->mode == Mode::command) {
+                if (!this->config.interpreter) {
+                    this->print("No interpreter configured.\n");
+                    continue;
+                }
+                this->mode = Mode::interpreter;
+                this->print("\nSwitched to interpreter mode. "
+                            "Press Ctrl+Z to exit.\n");
+            }
+            else if (this->mode == Mode::interpreter) {
+                this->mode = Mode::command;
+                this->print("\nSwitched to command mode. "
+                            "Press Ctrl+Z to enter interpreter mode.\n");
+            }
+            this->print_prompt();
+            continue;
+        }
         if (c != '\e') {
             return c;
         }
@@ -462,21 +481,28 @@ bool CLI::step_cursor_right_word() {
     return true;
 }
 
-void CLI::print_prompt(void) {
+void CLI::print_prompt(bool is_multiline) {
     if (this->config.colored_output) {
-        this->print(
-            (this->last_err == Err::ok || this->last_err == Err::incomplete)
-                ? ANSI_COLOR_GREEN
-                : ANSI_COLOR_RED);
+        if (this->last_err == Err::ok || this->last_err == Err::incomplete) {
+            this->print(ANSI_COLOR_GREEN);
+        }
+        else {
+            this->print(ANSI_COLOR_RED);
+        }
     }
-    if (this->last_err == Err::incomplete) {
-        this->print('>');
+    if (this->mode == Mode::command) {
+        this->print(this->config.command_mode_prompt_str);
     }
-    this->print("> ");
+    else if (this->mode == Mode::interpreter) {
+        this->print(is_multiline ? this->config.interpreter_multiline_prompt_str
+                                 : this->config.interpreter_prompt_str);
+    }
     if (this->config.colored_output) {
         this->print(ANSI_COLOR_YELLOW);
     }
 }
+
+void CLI::print_prompt_multiline() { this->print_prompt(true); }
 
 void CLI::clear_input() {
     const size_t max_fmt_size = 8;

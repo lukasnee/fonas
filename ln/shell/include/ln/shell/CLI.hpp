@@ -42,6 +42,11 @@ namespace ln::shell {
 
 class CLI {
 public:
+    enum class Mode {
+        command,
+        interpreter,
+    };
+
     struct Config {
         File istream = File(stdin);
         File ostream = File(stdout);
@@ -54,6 +59,9 @@ public:
             &Cmd::get_base_cmd_list(), &Cmd::get_general_cmd_list(),
             &Cmd::get_global_cmd_list()};
         std::span<Cmd::List *> cmd_lists = default_cmd_lists;
+        std::string_view command_mode_prompt_str = "$ ";
+        std::string_view interpreter_prompt_str = "> ";
+        std::string_view interpreter_multiline_prompt_str = ">> ";
     } config;
 
     explicit CLI(std::span<char> input_line_buf,
@@ -93,7 +101,8 @@ private:
     bool step_cursor_left_word();
     bool step_cursor_right_word();
 
-    void print_prompt();
+    void print_prompt(bool is_multiline = false);
+    void print_prompt_multiline();
     void clear_input();
     bool backspace_char();
     /** @return true if actually inserted */
@@ -106,5 +115,6 @@ private:
     History history;
     bool previously_called_from_history = false;
     Err last_err = Err::ok;
+    Mode mode = Mode::command;
 };
 } // namespace ln::shell
