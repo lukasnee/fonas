@@ -66,8 +66,11 @@ public:
 
     explicit CLI(std::span<char> input_line_buf,
                  std::span<char> history_buf = {})
-        : input{input_line_buf}, history{history_buf} {}
+        : input{input_line_buf}, history{history_buf} {
+        this->reset();
+    }
 
+    void reset();
     void routine();
 
     void print(const char &c, std::size_t times_to_repeat = 1);
@@ -116,5 +119,6 @@ private:
     bool previously_called_from_history = false;
     Err last_err = Err::ok;
     Mode mode = Mode::command;
+    bool pasting_mode = false;
 };
 } // namespace ln::shell

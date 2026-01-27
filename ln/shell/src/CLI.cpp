@@ -150,6 +150,11 @@ Err CLI::execute(const Cmd &cmd, const std::span<const std::string_view> args,
     return err;
 }
 
+void CLI::reset() {
+    // Tell terminal to enable bracketed paste mode
+    this->print("\033[?2004h");
+}
+
 void CLI::routine() {
     while (true) {
         const char c = this->getc_or_handle_escape_sequences();
@@ -159,6 +164,10 @@ void CLI::routine() {
         }
         if (' ' <= c && c <= '~') {
             this->insert(c);
+            continue;
+        }
+        if (this->pasting_mode && c == '\r') {
+            this->insert('\n');
             continue;
         }
         if (c == '\r') {
@@ -323,6 +332,26 @@ char CLI::getc_or_handle_escape_sequences() {
                 if (c == 'D') { // Ctrl + Left arrow
                     this->step_cursor_left_word();
                     continue;
+                }
+            }
+            if (c == '2') {
+                c = getc();
+                if (c == '0') {
+                    c = getc();
+                    if (c == '0') {
+                        c = getc();
+                        if (c == '~') { // Bracketed paste start
+                            this->pasting_mode = true;
+                            continue;
+                        }
+                    }
+                    else if (c == '1') {
+                        c = getc();
+                        if (c == '~') { // Bracketed paste end
+                            this->pasting_mode = false;
+                            continue;
+                        }
+                    }
                 }
             }
             if (c == '3') {

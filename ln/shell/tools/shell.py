@@ -130,6 +130,10 @@ def main():
         read_thread.start()
         tty.setraw(sys.stdin.fileno())
 
+        # ln/shell supports bracketed paste mode so enable it
+        sys.stdout.write("\x1b[?2004h")
+        sys.stdout.flush()
+
         while True:
             char = sys.stdin.read(1)
             if ord(char) == 3:  # Ctrl+C
