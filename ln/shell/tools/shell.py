@@ -110,9 +110,19 @@ def main():
         def read_serial():
             while ser.is_open and not stop_reading.is_set():
                 if ser.in_waiting > 0:
-                    data = ser.read(ser.in_waiting).decode("utf-8", errors="ignore").replace('\r\n', '\n').replace('\n', '\r\n')
+                    data = (
+                        ser.read(ser.in_waiting)
+                        .decode("utf-8", errors="ignore")
+                        .replace("\r\n", "\n")
+                        .replace("\n", "\r\n")
+                    )
                     if args.trace_input:
-                        print(''.join(f'R<{ord(c):02x}> ({c if c.isprintable() else ''})\r' for c in data))
+                        print(
+                            "".join(
+                                f"R<{ord(c):02x}> ({c if c.isprintable() else ''})\r"
+                                for c in data
+                            )
+                        )
                     sys.stdout.write(data)
                     sys.stdout.flush()
 
@@ -125,7 +135,12 @@ def main():
             if ord(char) == 3:  # Ctrl+C
                 break
             if args.trace_output:
-                print(''.join(f'W<{ord(c):02x}> ({c if c.isprintable() else ''})\r' for c in char))
+                print(
+                    "".join(
+                        f"W<{ord(c):02x}> ({c if c.isprintable() else ''})\r"
+                        for c in char
+                    )
+                )
             ser.write(char.encode("utf-8"))
         sys.stdout.write("\r\n")
     except (serial.SerialException, KeyboardInterrupt):
