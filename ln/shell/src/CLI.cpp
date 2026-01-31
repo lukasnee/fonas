@@ -17,6 +17,11 @@
 
 namespace ln::shell {
 
+CLI::CLI(std::span<char> input_line_buf, std::span<char> history_buf)
+    : input{input_line_buf}, history{history_buf} {
+    this->reset();
+}
+
 void CLI::print(const char &c, size_t times_to_repeat) {
     while (times_to_repeat--) {
         if (c == '\n') {

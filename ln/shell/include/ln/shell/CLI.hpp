@@ -65,11 +65,7 @@ public:
     } config;
 
     explicit CLI(std::span<char> input_line_buf,
-                 std::span<char> history_buf = {})
-        : input{input_line_buf}, history{history_buf} {
-        this->reset();
-    }
-
+                 std::span<char> history_buf = {});
     void reset();
     void routine();
 
@@ -78,16 +74,15 @@ public:
     int print(std::string_view sv);
     int printf(const char *fmt, ...);
 
-    /** @return {cmd, args} */
-    std::tuple<const Cmd *, std::span<const std::string_view>> find_cmd(
-        std::span<const std::string_view> args);
+    using Args = std::span<const std::string_view>;
+
+    std::tuple<const Cmd *, Args> find_cmd(Args args);
 
     Err execute_line(std::string_view line);
 
 private:
-    Err execute(const Cmd &cmd, std::span<const std::string_view> args,
-                const char *output_color_escape_sequence =
-                    "\e[32m"); // default in green
+    Err execute(const Cmd &cmd, Args args,
+                const char *output_color_escape_sequence = ANSI_COLOR_GREEN);
 
     char getc_or_handle_escape_sequences();
 
