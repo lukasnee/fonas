@@ -80,6 +80,8 @@ public:
 
     Err execute_line(std::string_view line);
 
+    void clear_screen();
+
 private:
     Err execute(const Cmd &cmd, Args args,
                 const char *output_color_escape_sequence = ANSI_COLOR_GREEN);

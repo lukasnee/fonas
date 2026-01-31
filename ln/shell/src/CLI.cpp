@@ -264,7 +264,13 @@ char CLI::getc_or_handle_escape_sequences() {
     };
     while (true) {
         char c = getc();
-        if (c == '\x1A') {
+        // NOLINTNEXTLINE(readability-magic-numbers)
+        if (c == 0x0C) { // Ctrl + L
+            this->clear_screen();
+            continue;
+        }
+        // NOLINTNEXTLINE(readability-magic-numbers)
+        if (c == 0x1A) {
             if (this->mode == Mode::command) {
                 if (!this->config.interpreter) {
                     this->print("No interpreter configured.\n");
@@ -537,6 +543,17 @@ void CLI::print_prompt(bool is_multiline) {
 }
 
 void CLI::print_prompt_multiline() { this->print_prompt(true); }
+
+void CLI::clear_screen() {
+    this->print("\e[2J\e[H");
+    this->print_prompt();
+    this->print(this->input.get());
+    const size_t chars_to_move_back =
+        this->input.get().size() - this->input.get_cursor_pos();
+    if (chars_to_move_back > 0) {
+        this->printf("\e[%zuD", chars_to_move_back);
+    }
+}
 
 void CLI::clear_input() {
     const size_t max_fmt_size = 8;
