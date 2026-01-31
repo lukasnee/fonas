@@ -298,6 +298,10 @@ char CLI::getc_or_handle_escape_sequences() {
             this->clear_input();
             continue;
         }
+        if (c == '\r') { // Alt + Enter
+            this->insert('\n');
+            continue;
+        }
         if (c == '[') {
             c = getc();
             if (c == 'A') { // Up arrow

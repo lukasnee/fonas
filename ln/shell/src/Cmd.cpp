@@ -195,8 +195,10 @@ Cmd cmd_help{Cmd::Cfg{
     .usage = "[<cmd_name:str>][--all]",
     .short_description = "show help information about commands",
     .fn = [](Cmd::Ctx ctx) {
-        ctx.cli.print("Ctrl-Z - switch between command and interpreter modes\n"
-                      "Ctrl-L - clear screen\n");
+        ctx.cli.print(
+            "Ctrl-Z - switch between command and interpreter modes\n"
+            "Ctrl-L - clear screen\n"
+            "Alt+Enter - insert newline (without entering the input)\n");
         const std::size_t depth_of_all = 7;
         // TODO: proper abstraction to parse optional args
         using namespace std::literals::string_view_literals;

@@ -17,6 +17,7 @@
 
 namespace ln::shell {
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 std::optional<std::span<std::string_view>> ArgParser::tokenize(
     const std::string_view sv, std::span<std::string_view> args_buf) {
     size_t arg_count = 0;
@@ -50,7 +51,7 @@ std::optional<std::span<std::string_view>> ArgParser::tokenize(
                 quote_char = *head;
                 arg_begin = head + 1;
             }
-            else if (*head == ' ') {
+            else if (*head == ' ' || *head == '\n') {
                 if (!arg_begin) {
                     continue;
                 }
