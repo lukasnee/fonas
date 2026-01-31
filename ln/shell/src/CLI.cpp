@@ -570,10 +570,13 @@ bool CLI::backspace_char() {
     if (!this->input.backspace_char()) {
         return false;
     }
-    this->print("\b");
-    this->print(this->input.get().substr(this->input.get_cursor_pos()));
-    this->print(" \b");
-    this->print('\b', this->input.get().size() - this->input.get_cursor_pos());
+    const auto sv = this->input.get().substr(this->input.get_cursor_pos());
+    this->printf("\b%.*s \b", static_cast<int>(sv.size()), sv.data());
+    const auto chars_to_move_back =
+        this->input.get().size() - this->input.get_cursor_pos();
+    if (chars_to_move_back > 0) {
+        this->printf("\e[%zuD", chars_to_move_back);
+    }
     return true;
 }
 
