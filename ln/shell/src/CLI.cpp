@@ -556,16 +556,8 @@ void CLI::clear_screen() {
 }
 
 void CLI::clear_input() {
-    const size_t max_fmt_size = 8;
-    std::array<char, max_fmt_size> buf;
-    std::snprintf(buf.data(), buf.size(), "\e[%zuD",
-                  this->input.get_cursor_pos());
-    this->print(buf.data());
-    std::snprintf(buf.data(), buf.size(), " \e[%zub", this->input.get().size());
-    this->print(buf.data());
-    std::snprintf(buf.data(), buf.size(), "\e[%zuD",
-                  this->input.get().size() + 1);
-    this->print(buf.data());
+    this->printf("\e[%zuD \e[%zub\e[%zuD", this->input.get_cursor_pos(),
+                 this->input.get().size(), this->input.get().size() + 1);
     this->input.clear();
 }
 
