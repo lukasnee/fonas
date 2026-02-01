@@ -21,18 +21,17 @@ class History {
 public:
     History(std::span<char> history_buf) : ring_buffer(history_buf) {}
 
-    void add_line(std::string_view line);
-    std::ranges::subrange<ln::RingBufferView<char>::iterator>
-    get_current_recall_line();
-    std::ranges::subrange<ln::RingBufferView<char>::iterator> recall_previous();
-    std::ranges::subrange<ln::RingBufferView<char>::iterator> recall_next();
+    void add(std::string_view entry);
+    std::ranges::subrange<ln::RingBufferView<char>::iterator> get();
+    std::ranges::subrange<ln::RingBufferView<char>::iterator> previous();
+    std::ranges::subrange<ln::RingBufferView<char>::iterator> next();
 
 private:
     static Err cmd_history_fn(Cmd::Ctx ctx);
     static Cmd cmd_history;
 
     ln::RingBufferView<char> ring_buffer;
-    ln::RingBufferView<char>::iterator recall_pos = ring_buffer.end();
+    ln::RingBufferView<char>::iterator recall_it = ring_buffer.end();
     bool last_recall_was_matching = false;
 };
 

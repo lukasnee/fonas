@@ -19,60 +19,55 @@ LOG_MODULE(cli_history, LOGGER_LEVEL_INFO);
 
 namespace ln::shell {
 
-const char line_separator = '\0';
+const char entry_separator = '\0';
 
-std::ranges::subrange<ln::RingBufferView<char>::iterator> History::
-    get_current_recall_line() {
+std::ranges::subrange<ln::RingBufferView<char>::iterator> History::get() {
     auto range =
-        std::ranges::subrange{this->recall_pos, this->ring_buffer.end()};
-    return std::ranges::subrange{this->recall_pos,
-                                 std::ranges::find(range, line_separator)};
+        std::ranges::subrange{this->recall_it, this->ring_buffer.end()};
+    return std::ranges::subrange{this->recall_it,
+                                 std::ranges::find(range, entry_separator)};
 }
 
-void History::add_line(std::string_view line) {
-    if (!this->ring_buffer.push_overwrite(line)) {
+void History::add(std::string_view entry) {
+    if (!this->ring_buffer.push_overwrite(entry)) {
         LN_PANIC();
         return;
     }
-    if (!this->ring_buffer.push_overwrite(line_separator)) {
+    if (!this->ring_buffer.push_overwrite(entry_separator)) {
         LN_PANIC();
         return;
     }
-    this->recall_pos = this->ring_buffer.end();
+    this->recall_it = this->ring_buffer.end();
 }
 
-std::ranges::subrange<ln::RingBufferView<char>::iterator> History::
-    recall_previous() {
-    auto line_begin_it = this->ring_buffer.begin();
-    auto line_end_it = this->recall_pos;
-    auto range =
-        std::ranges::subrange{line_begin_it, line_end_it} | std::views::reverse;
-    if (auto it = std::ranges::find(range, line_separator);
+std::ranges::subrange<ln::RingBufferView<char>::iterator> History::previous() {
+    auto begin_it = this->ring_buffer.begin();
+    auto end_it = this->recall_it;
+    auto range = std::ranges::subrange{begin_it, end_it} | std::views::reverse;
+    if (auto it = std::ranges::find(range, entry_separator);
         it != std::ranges::end(range)) {
-        line_end_it = std::prev(it.base());
+        end_it = std::prev(it.base());
     }
-    range =
-        std::ranges::subrange{line_begin_it, line_end_it} | std::views::reverse;
-    auto it = std::ranges::find(range, line_separator);
-    this->recall_pos = it.base();
-    return std::ranges::subrange{this->recall_pos, line_end_it};
+    range = std::ranges::subrange{begin_it, end_it} | std::views::reverse;
+    auto it = std::ranges::find(range, entry_separator);
+    this->recall_it = it.base();
+    return std::ranges::subrange{this->recall_it, end_it};
 }
 
-std::ranges::subrange<ln::RingBufferView<char>::iterator> History::
-    recall_next() {
-    auto line_begin_it = this->recall_pos;
-    auto line_end_it = this->ring_buffer.end();
-    auto range = std::ranges::subrange{line_begin_it, line_end_it};
-    if (auto it = std::ranges::find(range, line_separator);
+std::ranges::subrange<ln::RingBufferView<char>::iterator> History::next() {
+    auto begin_it = this->recall_it;
+    auto end_it = this->ring_buffer.end();
+    auto range = std::ranges::subrange{begin_it, end_it};
+    if (auto it = std::ranges::find(range, entry_separator);
         it != std::ranges::end(range)) {
-        line_begin_it = std::next(it);
+        begin_it = std::next(it);
     }
-    range = std::ranges::subrange{line_begin_it, line_end_it};
-    auto it = std::ranges::find(range, line_separator);
+    range = std::ranges::subrange{begin_it, end_it};
+    auto it = std::ranges::find(range, entry_separator);
     if (it != std::ranges::end(range)) {
-        this->recall_pos = line_begin_it;
+        this->recall_it = begin_it;
     }
-    return std::ranges::subrange{line_begin_it, it};
+    return std::ranges::subrange{begin_it, it};
 }
 
 Err History::cmd_history_fn(Cmd::Ctx ctx) {
@@ -88,7 +83,7 @@ Cmd History::cmd_history =
                  .short_description = "print command history",
                  .fn = [](Cmd::Ctx ctx) {
                      for (const char c : ctx.cli.history.ring_buffer) {
-                         if (c == line_separator) {
+                         if (c == entry_separator) {
                              ctx.cli.print('\n');
                              continue;
                          }

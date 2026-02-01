@@ -98,14 +98,14 @@ VM::~VM() {
     }
 }
 
-Interpreter::Err VM::interpret_line(std::string_view line) {
+Interpreter::Err VM::interpret(std::string_view str) {
     // TODO: we could probably optimze by only tokenizing first word
     // and checking if it's a known command. If not, we can skip
     // directly to Lua execution.
 
-    // 1) Try as expression: return <line>
+    // 1) Try as expression: return <str>
     lua_pushlstring(this->L, "return ", strlen("return "));
-    lua_pushlstring(this->L, line.data(), line.size());
+    lua_pushlstring(this->L, str.data(), str.size());
     lua_concat(this->L, 2);
     int status = luaL_loadbuffer(this->L, lua_tostring(this->L, -1),
                                  lua_rawlen(this->L, -1), "=shell");
@@ -117,8 +117,8 @@ Interpreter::Err VM::interpret_line(std::string_view line) {
         }
         lua_pop(this->L, 2);
 
-        // 2) Try as statement/chunk: <line>
-        status = luaL_loadbuffer(this->L, line.data(), line.size(), "=shell");
+        // 2) Try as statement/chunk: <str>
+        status = luaL_loadbuffer(this->L, str.data(), str.size(), "=shell");
         if (status != LUA_OK) {
             if (l_is_incomplete(this->L, status)) {
                 lua_pop(this->L, 1);
@@ -131,7 +131,7 @@ Interpreter::Err VM::interpret_line(std::string_view line) {
         nresults = 0;
     }
     else {
-        lua_remove(this->L, -2); // remove modified line
+        lua_remove(this->L, -2); // remove modified str
         nresults = LUA_MULTRET;
     }
     // 3) Run the chunk

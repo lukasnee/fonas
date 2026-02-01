@@ -15,20 +15,20 @@
 
 namespace ln::shell {
 
-class Input {
+class Buffer {
 public:
-    explicit Input(std::span<char> line_buf) : line_buf(line_buf) {}
-    Input() = delete;
-    Input(const Input &) = delete;
-    Input &operator=(const Input &) = delete;
-    Input(Input &&) = delete;
-    Input &operator=(Input &&) = delete;
-    virtual ~Input() = default;
+    explicit Buffer(std::span<char> mem) : mem(mem) {}
+    Buffer() = delete;
+    Buffer(const Buffer &) = delete;
+    Buffer &operator=(const Buffer &) = delete;
+    Buffer(Buffer &&) = delete;
+    Buffer &operator=(Buffer &&) = delete;
+    virtual ~Buffer() = default;
 
     void clear();
 
     [[nodiscard]] std::string_view::iterator cursor() const {
-        return this->line_buf.data() + this->cursor_idx;
+        return this->mem.data() + this->cursor_idx;
     }
     [[nodiscard]] std::string_view get() const;
     [[nodiscard]] char get_char_at_cursor(ptrdiff_t offset = 0) const;
@@ -53,7 +53,7 @@ public:
     [[nodiscard]] size_t get_distance_to_next(char target) const;
 
 private:
-    std::span<char> line_buf;
+    std::span<char> mem;
     std::size_t cursor_idx = 0;
     std::size_t chars_used = 0;
 };

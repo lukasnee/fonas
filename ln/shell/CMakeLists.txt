@@ -9,7 +9,7 @@ target_sources(
           src/CLI.cpp
           src/Cmd.cpp
           src/History.cpp
-          src/Input.cpp
+          src/Buffer.cpp
           src/Parser.cpp
           src/cmds/generic/generic.cpp)
 target_include_directories(ln_shell PUBLIC include)

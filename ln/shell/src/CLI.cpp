@@ -17,8 +17,8 @@
 
 namespace ln::shell {
 
-CLI::CLI(std::span<char> input_line_buf, std::span<char> history_buf)
-    : input{input_line_buf}, history{history_buf} {
+CLI::CLI(std::span<char> input_buf, std::span<char> history_buf)
+    : input{input_buf}, history{history_buf} {
     this->reset();
 }
 
@@ -177,10 +177,9 @@ void CLI::routine() {
         }
         if (c == '\r') {
             this->print("\r\n");
-            auto line = this->input.get();
-            this->add_line_to_history(line);
+            this->add_entry_to_history(this->input.get());
             if (this->mode == Mode::command) {
-                this->last_err = this->execute_line(line);
+                this->last_err = this->execute(this->input.get());
                 if (this->last_err == Err::unknownCmd) {
                     if (this->config.colored_output) {
                         this->print(ANSI_COLOR_RED);
@@ -195,7 +194,8 @@ void CLI::routine() {
                 if (!this->config.interpreter) {
                     this->print("No interpreter configured.\n");
                 }
-                const auto err = this->config.interpreter->interpret_line(line);
+                const auto err =
+                    this->config.interpreter->interpret(this->input.get());
                 if (err == Interpreter::Err::incomplete) {
                     this->last_err = Err::incomplete;
                     this->input.insert('\n');
@@ -221,13 +221,13 @@ void CLI::routine() {
     }
 }
 
-Err CLI::execute_line(std::string_view line) {
-    if (line.empty()) {
+Err CLI::execute(std::string_view input) {
+    if (input.empty()) {
         return Err::ok;
     }
     std::array<std::string_view, ArgParser::Cfg::args_buf_size_default>
         args_buf;
-    auto opt_args = ArgParser::tokenize(line, args_buf);
+    auto opt_args = ArgParser::tokenize(input, args_buf);
     if (!opt_args) {
         if (this->config.colored_output) {
             this->print(ANSI_COLOR_RED);
@@ -307,11 +307,11 @@ char CLI::getc_or_handle_escape_sequences() {
         if (c == '[') {
             c = getc();
             if (c == 'A') { // Up arrow
-                this->recall_previous_line_from_history();
+                this->recall_prev_entry_from_history();
                 continue;
             }
             if (c == 'B') { // Down arrow
-                this->recall_next_line_from_history();
+                this->recall_next_entry_from_history();
                 continue;
             }
             if (c == 'C') { // Right arrow
@@ -383,43 +383,41 @@ char CLI::getc_or_handle_escape_sequences() {
     }
 }
 
-void CLI::add_line_to_history(std::string_view str) {
-    if (std::ranges::equal(str, this->history.get_current_recall_line())) {
+void CLI::add_entry_to_history(std::string_view entry) {
+    if (std::ranges::equal(entry, this->history.get())) {
         this->previously_called_from_history = true;
     }
     else {
-        this->history.add_line(line);
+        this->history.add(entry);
     }
 }
 
-std::ranges::subrange<ln::RingBufferView<char>::iterator> CLI::
-    get_previous_history_line() {
+bool CLI::recall_prev_entry_from_history() {
+    std::ranges::subrange<ln::RingBufferView<char>::iterator> entry = {};
     if (this->previously_called_from_history) {
         this->previously_called_from_history = false;
-        return this->history.get_current_recall_line();
+        entry = this->history.get();
     }
-    return this->history.recall_previous();
-}
-
-bool CLI::recall_previous_line_from_history() {
-    auto line = this->get_previous_history_line();
-    if (line.empty()) {
+    else {
+        entry = this->history.previous();
+    }
+    if (entry.empty()) {
         return false;
     }
     this->clear_input();
-    for (const char &c : line) {
+    for (const char &c : entry) {
         this->insert(c);
     }
     return true;
 }
 
-bool CLI::recall_next_line_from_history() {
-    auto line = this->history.recall_next();
-    if (line.empty()) {
+bool CLI::recall_next_entry_from_history() {
+    auto entry = this->history.next();
+    if (entry.empty()) {
         return false;
     }
     this->clear_input();
-    for (const char &c : line) {
+    for (const char &c : entry) {
         this->insert(c);
     }
     return true;

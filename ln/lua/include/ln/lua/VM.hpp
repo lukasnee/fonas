@@ -23,7 +23,7 @@ public:
     explicit VM();
     virtual ~VM();
 
-    Interpreter::Err interpret_line(std::string_view line) final;
+    Interpreter::Err interpret(std::string_view str) final;
 
     lua_State *get_state() { return this->L; }
 

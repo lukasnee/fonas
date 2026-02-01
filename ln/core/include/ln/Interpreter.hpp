@@ -19,16 +19,16 @@ public:
         ok,
         compileError,
         runtimeError,
-        incomplete /// Line is incomplete, expects more input.
+        incomplete /// String input is incomplete, expects more input.
     };
 
     /**
-     * @brief Interpret a line of input in REPL (read-eval-print loop) fashion.
+     * @brief Interpret a string in REPL (read-eval-print loop) fashion.
      *
-     * @param line Line of input to interpret.
+     * @param str String to interpret.
      * @return Err Result of interpretation.
      */
-    virtual Err interpret_line(std::string_view line) = 0;
+    virtual Err interpret(std::string_view str) = 0;
 };
 
 } // namespace ln

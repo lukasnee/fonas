@@ -12,7 +12,7 @@
 #include "ln/File.hpp"
 #include "ln/Interpreter.hpp"
 #include "ln/shell/History.hpp"
-#include "ln/shell/Input.hpp"
+#include "ln/shell/Buffer.hpp"
 #include "ln/shell/Cmd.hpp"
 
 #include "ln/logger/logger.h"
@@ -64,8 +64,7 @@ public:
         std::string_view interpreter_multiline_prompt_str = ">> ";
     } config;
 
-    explicit CLI(std::span<char> input_line_buf,
-                 std::span<char> history_buf = {});
+    explicit CLI(std::span<char> input_buf, std::span<char> history_buf = {});
     void reset();
     void routine();
 
@@ -78,7 +77,7 @@ public:
 
     std::tuple<const Cmd *, Args> find_cmd(Args args);
 
-    Err execute_line(std::string_view line);
+    Err execute(std::string_view input);
 
     void clear_screen();
 
@@ -88,22 +87,24 @@ private:
 
     char getc_or_handle_escape_sequences();
 
-    bool move_cursor_begin();
-    bool move_cursor_end();
-    void add_line_to_history(std::string_view line);
-    std::ranges::subrange<ln::RingBufferView<char>::iterator>
-    get_previous_history_line();
-    bool recall_previous_line_from_history();
-    bool recall_next_line_from_history();
+    void add_entry_to_history(std::string_view entry);
+    bool recall_prev_entry_from_history();
+    bool recall_next_entry_from_history();
+
+    void print_prompt(bool is_multiline = false);
+    void print_prompt_multiline();
+    size_t get_prompt_length() const;
+
+    // TODO: try to extract class Editor for visual input editing. It should
+    // take Input as a parameter as well as the starting cursor position. Maybe
+    // define a scrollable region for the input buffer.
 
     bool step_cursor_left();
     bool step_cursor_left_word();
     bool step_cursor_right();
     bool step_cursor_right_word();
-
-    void print_prompt(bool is_multiline = false);
-    void print_prompt_multiline();
-    size_t get_prompt_length() const;
+    bool move_cursor_begin();
+    bool move_cursor_end();
 
     void clear_input();
     bool delete_char();
@@ -113,7 +114,7 @@ private:
 
     LOG_MODULE_CLASS_MEMBER(CLI, LOGGER_LEVEL_NOTSET);
 
-    Input input;
+    Buffer input;
     friend class History;
     History history;
     bool previously_called_from_history = false;
