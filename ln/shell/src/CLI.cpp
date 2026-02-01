@@ -214,6 +214,8 @@ void CLI::routine() {
                 }
             }
             this->input.clear();
+            // TODO: it can be that visual cursor is not at end of line here.
+            // We should move it to the end at this point.
             this->print_prompt();
         }
     }
@@ -381,30 +383,8 @@ char CLI::getc_or_handle_escape_sequences() {
     }
 }
 
-bool CLI::delete_char() {
-    if (!this->input.delete_char()) {
-        return false;
-    }
-    this->print(this->input.get().substr(this->input.get_cursor_pos()));
-    this->print(" \b");
-    this->print('\b', this->input.get().size() - this->input.get_cursor_pos());
-    return true;
-}
-
-bool CLI::move_cursor_begin() {
-    while (this->step_cursor_left()) {
-    }
-    return true;
-}
-
-bool CLI::move_cursor_end() {
-    while (this->step_cursor_right()) {
-    }
-    return true;
-}
-
-void CLI::add_line_to_history(std::string_view line) {
-    if (std::ranges::equal(line, this->history.get_current_recall_line())) {
+void CLI::add_line_to_history(std::string_view str) {
+    if (std::ranges::equal(str, this->history.get_current_recall_line())) {
         this->previously_called_from_history = true;
     }
     else {
@@ -449,7 +429,49 @@ bool CLI::step_cursor_left() {
     if (!this->input.step_left()) {
         return false;
     }
-    this->print('\b');
+    if (this->input.get_char_at_cursor() != '\n') {
+        this->print('\b');
+        return true;
+    }
+    this->print("\e[1A");
+    auto distance = this->input.get_distance_to_prev('\n');
+    if (distance == this->input.get_cursor_pos()) {
+        distance += this->get_prompt_length();
+    }
+    if (distance > 0) {
+        this->printf("\e[%zuC", distance);
+    }
+    return true;
+}
+
+bool CLI::step_cursor_left_word() {
+    char c = this->input.get_char_at_cursor(-1);
+    bool isspace_to_skip = std::isspace(c);
+    bool isalnum_to_skip = std::isalnum(c);
+    while (this->step_cursor_left()) {
+        c = this->input.get_char_at_cursor(-1);
+        if (isspace_to_skip) {
+            if (std::isspace(c)) {
+                continue;
+            }
+            break;
+        }
+        if (isalnum_to_skip) {
+            if (std::isalnum(c)) {
+                continue;
+            }
+            break;
+        }
+        if (std::isspace(c)) {
+            isspace_to_skip = true;
+            continue;
+        }
+        if (std::isalnum(c)) {
+            isalnum_to_skip = true;
+            continue;
+        }
+        break;
+    }
     return true;
 }
 
@@ -461,13 +483,12 @@ bool CLI::step_cursor_right() {
     return true;
 }
 
-bool CLI::step_cursor_left_word() {
-    char c = this->input.get()[this->input.get_cursor_pos() - 1];
+bool CLI::step_cursor_right_word() {
+    char c = this->input.get_char_at_cursor();
     bool isspace_to_skip = std::isspace(c);
     bool isalnum_to_skip = std::isalnum(c);
-    while (this->input.get_cursor_pos() > 0) {
-        this->step_cursor_left();
-        c = this->input.get()[this->input.get_cursor_pos() - 1];
+    while (this->step_cursor_right()) {
+        const char c = this->input.get_char_at_cursor();
         if (isspace_to_skip) {
             if (std::isspace(c)) {
                 continue;
@@ -493,34 +514,16 @@ bool CLI::step_cursor_left_word() {
     return true;
 }
 
-bool CLI::step_cursor_right_word() {
-    char c = this->input.get()[this->input.get_cursor_pos()];
-    bool isspace_to_skip = std::isspace(c);
-    bool isalnum_to_skip = std::isalnum(c);
-    while (this->input.get_cursor_pos() < this->input.get().size()) {
-        this->step_cursor_right();
-        const char c = this->input.get()[this->input.get_cursor_pos()];
-        if (isspace_to_skip) {
-            if (std::isspace(c)) {
-                continue;
-            }
-            break;
-        }
-        if (isalnum_to_skip) {
-            if (std::isalnum(c)) {
-                continue;
-            }
-            break;
-        }
-        if (std::isspace(c)) {
-            isspace_to_skip = true;
-            continue;
-        }
-        if (std::isalnum(c)) {
-            isalnum_to_skip = true;
-            continue;
-        }
-        break;
+bool CLI::move_cursor_begin() {
+    // TODO: optimize
+    while (this->step_cursor_left()) {
+    }
+    return true;
+}
+
+bool CLI::move_cursor_end() {
+    // TODO: optimize
+    while (this->step_cursor_right()) {
     }
     return true;
 }
@@ -548,44 +551,111 @@ void CLI::print_prompt(bool is_multiline) {
 
 void CLI::print_prompt_multiline() { this->print_prompt(true); }
 
+size_t CLI::get_prompt_length() const {
+    switch (this->mode) {
+    case Mode::command:
+        return this->config.command_mode_prompt_str.size();
+    case Mode::interpreter:
+        return this->config.interpreter_prompt_str.size();
+    default:
+        return 0;
+    }
+}
+
 void CLI::clear_screen() {
     this->print("\e[2J\e[H");
     this->print_prompt();
-    this->print(this->input.get());
-    const size_t chars_to_move_back =
-        this->input.get().size() - this->input.get_cursor_pos();
-    if (chars_to_move_back > 0) {
-        this->printf("\e[%zuD", chars_to_move_back);
-    }
+    this->print(this->input.get().substr(0, this->input.get_cursor_pos()));
+    this->printf("\e[s");
+    this->print(this->input.get().substr(this->input.get_cursor_pos()));
+    this->printf("\e[u");
 }
 
 void CLI::clear_input() {
-    this->printf("\e[%zuD \e[%zub\e[%zuD", this->input.get_cursor_pos(),
-                 this->input.get().size(), this->input.get().size() + 1);
+    const auto lines_back =
+        std::count(this->input.get().begin(), this->input.cursor(), '\n');
+    if (lines_back > 0) {
+        this->printf("\e[%zuF\e[%zuC", lines_back, this->get_prompt_length());
+    }
+    else {
+        auto num_of_chars_on_left = this->input.get_distance_to_begin();
+        if (num_of_chars_on_left > 0) {
+            this->printf("\e[%zuD", num_of_chars_on_left);
+        }
+    }
+    this->printf("\e[J", this->get_prompt_length());
     this->input.clear();
 }
 
-/** @return true if actually backspaced */
-bool CLI::backspace_char() {
-    if (!this->input.backspace_char()) {
+bool CLI::delete_char() {
+    const char removed_char = this->input.get_char_at_cursor();
+    if (!this->input.delete_char()) {
         return false;
     }
-    const auto sv = this->input.get().substr(this->input.get_cursor_pos());
-    this->printf("\b%.*s \b", static_cast<int>(sv.size()), sv.data());
-    const auto chars_to_move_back =
-        this->input.get().size() - this->input.get_cursor_pos();
-    if (chars_to_move_back > 0) {
-        this->printf("\e[%zuD", chars_to_move_back);
+    if (removed_char != '\n') {
+        this->print("\e[P");
+        return true;
+    }
+    this->print("\e[1B\e[M\e[1A");
+    auto num_chars_on_left = this->input.get_distance_to_prev('\n');
+    if (num_chars_on_left == this->input.get_cursor_pos()) {
+        num_chars_on_left += this->get_prompt_length();
+    }
+    if (num_chars_on_left > 0) {
+        this->printf("\e[%zuC", num_chars_on_left);
+    }
+    auto num_chars_on_right = this->input.get_distance_to_next('\n');
+    if (num_chars_on_right > 0) {
+        this->print(this->input.get().substr(this->input.get_cursor_pos(),
+                                             num_chars_on_right));
+        this->printf("\e[%zuD", num_chars_on_right);
     }
     return true;
 }
 
-bool CLI::insert(const char &c) {
+/** @return true if actually backspaced */
+bool CLI::backspace_char() {
+    const char removed_char = this->input.get_char_at_cursor(-1);
+    if (!this->input.backspace_char()) {
+        return false;
+    }
+    if (removed_char != '\n') {
+        this->print("\b\e[P");
+        return true;
+    }
+    this->printf("\e[M\e[1A");
+    auto num_chars_on_left = this->input.get_distance_to_prev('\n');
+    if (num_chars_on_left == this->input.get_cursor_pos()) {
+        num_chars_on_left += this->get_prompt_length();
+    }
+    if (num_chars_on_left > 0) {
+        this->printf("\e[%zuC", num_chars_on_left);
+    }
+    auto num_chars_on_right = this->input.get_distance_to_next('\n');
+    if (num_chars_on_right > 0) {
+        this->print(this->input.get().substr(this->input.get_cursor_pos(),
+                                             num_chars_on_right));
+        this->printf("\e[%zuD", num_chars_on_right);
+    }
+    return true;
+}
+
+bool CLI::insert(char c) {
     if (!this->input.insert(c)) {
         return false;
     }
-    this->print(this->input.get().substr(this->input.get_cursor_pos() - 1));
-    this->print('\b', this->input.get().size() - this->input.get_cursor_pos());
+    if (c == '\n') {
+        this->print("\e[K\n\e[L");
+        auto num_chars_on_right = this->input.get_distance_to_next('\n');
+        if (num_chars_on_right > 0) {
+            this->print(this->input.get().substr(this->input.get_cursor_pos(),
+                                                 num_chars_on_right));
+            this->printf("\e[%zuD", num_chars_on_right);
+        }
+        return true;
+    }
+    this->print("\e[@");
+    this->print(c);
     return true;
 }
 

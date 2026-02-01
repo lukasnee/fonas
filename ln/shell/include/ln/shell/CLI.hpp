@@ -88,7 +88,6 @@ private:
 
     char getc_or_handle_escape_sequences();
 
-    bool delete_char();
     bool move_cursor_begin();
     bool move_cursor_end();
     void add_line_to_history(std::string_view line);
@@ -96,17 +95,21 @@ private:
     get_previous_history_line();
     bool recall_previous_line_from_history();
     bool recall_next_line_from_history();
+
     bool step_cursor_left();
-    bool step_cursor_right();
     bool step_cursor_left_word();
+    bool step_cursor_right();
     bool step_cursor_right_word();
 
     void print_prompt(bool is_multiline = false);
     void print_prompt_multiline();
+    size_t get_prompt_length() const;
+
     void clear_input();
+    bool delete_char();
     bool backspace_char();
     /** @return true if actually inserted */
-    bool insert(const char &c);
+    bool insert(char c);
 
     LOG_MODULE_CLASS_MEMBER(CLI, LOGGER_LEVEL_NOTSET);
 
