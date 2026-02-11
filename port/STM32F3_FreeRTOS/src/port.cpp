@@ -176,6 +176,8 @@ std::chrono::milliseconds get_uptime_ms() {
 
 } // namespace ln
 
+extern "C" void vApplicationMallocFailedHook(void) { LN_PANIC(); }
+
 extern "C" void ln_panic(const char *file, int line) { ln::panic(file, line); }
 extern "C" void ln_reset() { ln::reset(); }
 extern "C" void _ln_hardfault_handler(void *frame) {
