@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include <string.h>
+#include <string.h> // for strrchr
 
 #ifdef __cplusplus
 extern "C"
@@ -44,3 +44,27 @@ extern "C"
 #ifdef __cplusplus
 }
 #endif
+
+#ifdef __cplusplus
+
+#include <chrono>
+
+namespace ln {
+
+/**
+ * @brief Reset the system (software reset).
+ *
+ * @note Port-specific implementation.
+ */
+void reset();
+
+/**
+ * @brief Get the system uptime in milliseconds.
+ *
+ * @note Port-specific implementation.
+ */
+std::chrono::milliseconds get_uptime_ms();
+
+} // namespace ln
+
+#endif // __cplusplus

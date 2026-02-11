@@ -49,6 +49,7 @@ add_library(ln INTERFACE)
 add_library(ln::ln ALIAS ln)
 
 add_subdirectory(ln)
+add_subdirectory(port)
 
 if(PROJECT_IS_TOP_LEVEL AND NOT CMAKE_CROSSCOMPILING)
   enable_testing()
