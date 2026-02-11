@@ -1,6 +1,6 @@
 {
     "GPL License Preamble": {
-        "prefix": "gpl-preamble",
+        "prefix": "ln_c_cpp_preamble",
         "body": [
             "/*",
             " * Copyright (c) ${CURRENT_YEAR} Lukas Neverauskis https://github.com/lukasnee",
@@ -9,8 +9,9 @@
             " * it under the terms of the GNU General Public License as published by",
             " * the Free Software Foundation; either version 2 of the License, or",
             " * (at your option) any later version.",
-            " */"
+            " */",
+            ""
         ],
-        "description": "GPL license preamble with copyright notice"
+        "description": "ln library GPL license preamble with copyright notice for C/C++ files"
     }
 }
