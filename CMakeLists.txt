@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(LN_FREERTOS "Enable FreeRTOS and features depending on it" OFF)
 option(LN_LITTLEFS "Enable LittleFS support" OFF)
 option(LN_LUA "Enable Lua scripting support" OFF)
+option(LN_FMT "Enable fmt formatting library" OFF)
 
 project(
   ln
@@ -41,6 +42,9 @@ if(LN_LITTLEFS)
 endif()
 if(LN_LUA)
   add_subdirectory(extern/lua)
+endif()
+if(LN_FMT)
+  include(extern/fmt/fmt.cmake)
 endif()
 
 # NOTE: ln library is composed of multiple ln::* modular targets, the ln is an

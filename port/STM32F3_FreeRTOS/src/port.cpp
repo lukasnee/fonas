@@ -17,7 +17,9 @@ extern "C"
 #include "stm32f3xx.h"
 }
 
-#include <cstdio>
+#include <fmt/core.h>
+#include <fmt/ranges.h>
+
 #include <cstdint>
 #include <inttypes.h>
 
@@ -49,20 +51,17 @@ static uint32_t get_ipsr() {
  * @param size The total words to print.
  * @param width The number of words to print per line.
  */
-static void print_words_in_hex(const char *indent, uint32_t address,
-                               size_t size, size_t width) {
-    for (size_t i = 0; i < size; i += width) {
-        auto addr_ptr = reinterpret_cast<uint32_t *>(address) + i;
-        fputs(indent, stdout);
-        for (size_t j = 0; j < width; j++) {
-            if (i + j < size) {
-                printf("%08" PRIX32 " ", addr_ptr[j]);
-            }
-            else {
-                printf("   ");
-            }
-        }
-        printf("\n");
+static void print_words_in_hex(std::string_view indent, uint32_t address,
+                               size_t size, const size_t words_per_line) {
+    while (size) {
+        const size_t line_words = std::min(size, words_per_line);
+        fmt::print(
+            "{}{:08X}\n", indent,
+            fmt::join(std::span<uint32_t>(reinterpret_cast<uint32_t *>(address),
+                                          line_words),
+                      " "));
+        address += line_words * sizeof(uint32_t);
+        size -= line_words;
     }
 }
 
@@ -124,16 +123,15 @@ static void hardfault_handler(void *exception_stack_frame) {
     };
     const FType ftype = exc_return & (1 << 4) ? FType::basic : FType::extended;
 
-    printf("\nsystem hardfault!\n");
-    printf("uptime: %llu ms\n", get_uptime_ms().count());
+    fmt::print("\nsystem hardfault!\n");
+    fmt::print("uptime: {} ms\n", get_uptime_ms().count());
     const uint32_t sp =
         reinterpret_cast<uint32_t>(frame) +
         (ftype == FType::basic ? sizeof(ExceptionStackFrameBasic)
                                : sizeof(ExceptionStackFrameExtended));
-    printf("SP: %08" PRIX32 " (%s)\n", sp,
-           spsel == SPSEL::main ? "MSP" : "PSP");
-    printf("SPSEL: %s\n", spsel == SPSEL::main ? "main" : "process");
-    printf("mode: %s\n", mode == Mode::thread ? "thread" : "handler");
+    fmt::print("SP: {:08X} ({})\n", sp, spsel == SPSEL::main ? "MSP" : "PSP");
+    fmt::print("SPSEL: {}\n", spsel == SPSEL::main ? "main" : "process");
+    fmt::print("mode: {}\n", mode == Mode::thread ? "thread" : "handler");
 
     const std::array<std::pair<uint32_t, const char *>, 22>
         CFSR_bitmask_to_str = {{{SCB_CFSR_USGFAULTSR_Msk, "USGFAULTSR"},
@@ -158,65 +156,68 @@ static void hardfault_handler(void *exception_stack_frame) {
                                 {SCB_CFSR_INVPC_Msk, "INVPC"},
                                 {SCB_CFSR_INVSTATE_Msk, "INVSTATE"},
                                 {SCB_CFSR_UNDEFINSTR_Msk, "UNDEFINSTR"}}};
-
-    printf("CFSR: %08" PRIX32 " (", SCB->CFSR);
+    fmt::print("CFSR: {:08X} (", static_cast<uint32_t>(SCB->CFSR));
     bool first = true;
-    for (const auto &[bitmask, name] : CFSR_bitmask_to_str) {
+    for (auto &[bitmask, name] : CFSR_bitmask_to_str) {
         if (SCB->CFSR & bitmask) {
             if (!first) {
-                printf("|");
+                fmt::print("|");
             }
-            printf("%s", name);
+            fmt::print("{}", reinterpret_cast<const char *>(name));
             first = false;
         }
     }
-    printf(")\n");
-    printf("HFSR: %08" PRIX32 "\n"
-           "DFSR: %08" PRIX32 "\n"
-           "MMFAR: %08" PRIX32 "\n"
-           "BFAR: %08" PRIX32 "\n"
-           "AFSR: %08" PRIX32 "\n",
-           SCB->HFSR, SCB->DFSR, SCB->MMFAR, SCB->BFAR, SCB->AFSR);
+    fmt::print(")\n");
+    fmt::print(
+        "HFSR: {:08X}\n"
+        "DFSR: {:08X}\n"
+        "MMFAR: {:08X}\n"
+        "BFAR: {:08X}\n"
+        "AFSR: {:08X}\n",
+        static_cast<uint32_t>(SCB->HFSR), static_cast<uint32_t>(SCB->DFSR),
+        static_cast<uint32_t>(SCB->MMFAR), static_cast<uint32_t>(SCB->BFAR),
+        static_cast<uint32_t>(SCB->AFSR));
 
-    printf("exception stack frame:\n"
-           "  R0: %08" PRIX32 "\n"
-           "  R1: %08" PRIX32 "\n"
-           "  R2: %08" PRIX32 "\n"
-           "  R3: %08" PRIX32 "\n"
-           "  R12: %08" PRIX32 "\n"
-           "  LR: %08" PRIX32 "\n"
-           "  return_address: %08" PRIX32 "\n"
-           "  retpsr: %08" PRIX32 "\n",
-           frame->basic.r0, frame->basic.r1, frame->basic.r2, frame->basic.r3,
-           frame->basic.r12, frame->basic.lr, frame->basic.return_address,
-           frame->basic.retpsr);
+    fmt::print("exception stack frame:\n"
+               "  R0: {:08X}\n"
+               "  R1: {:08X}\n"
+               "  R2: {:08X}\n"
+               "  R3: {:08X}\n"
+               "  R12: {:08X}\n"
+               "  LR: {:08X}\n"
+               "  return_address: {:08X}\n"
+               "  retpsr: {:08X}\n",
+               frame->basic.r0, frame->basic.r1, frame->basic.r2,
+               frame->basic.r3, frame->basic.r12, frame->basic.lr,
+               frame->basic.return_address, frame->basic.retpsr);
     if (ftype == FType::extended) {
-        printf("  S0: %08" PRIX32 "\n"
-               "  S1: %08" PRIX32 "\n"
-               "  S2: %08" PRIX32 "\n"
-               "  S3: %08" PRIX32 "\n"
-               "  S4: %08" PRIX32 "\n"
-               "  S5: %08" PRIX32 "\n"
-               "  S6: %08" PRIX32 "\n"
-               "  S7: %08" PRIX32 "\n"
-               "  S8: %08" PRIX32 "\n"
-               "  S9: %08" PRIX32 "\n"
-               "  S10: %08" PRIX32 "\n"
-               "  S11: %08" PRIX32 "\n"
-               "  S12: %08" PRIX32 "\n"
-               "  S13: %08" PRIX32 "\n"
-               "  S14: %08" PRIX32 "\n"
-               "  S15: %08" PRIX32 "\n"
-               "  FPSCR: %08" PRIX32 "\n"
-               "  VPR: %08" PRIX32 "\n",
-               frame->extended.s0, frame->extended.s1, frame->extended.s2,
-               frame->extended.s3, frame->extended.s4, frame->extended.s5,
-               frame->extended.s6, frame->extended.s7, frame->extended.s8,
-               frame->extended.s9, frame->extended.s10, frame->extended.s11,
-               frame->extended.s12, frame->extended.s13, frame->extended.s14,
-               frame->extended.s15, frame->extended.fpscr, frame->extended.vpr);
+        fmt::print("  S0: {:08X}\n"
+                   "  S1: {:08X}\n"
+                   "  S2: {:08X}\n"
+                   "  S3: {:08X}\n"
+                   "  S4: {:08X}\n"
+                   "  S5: {:08X}\n"
+                   "  S6: {:08X}\n"
+                   "  S7: {:08X}\n"
+                   "  S8: {:08X}\n"
+                   "  S9: {:08X}\n"
+                   "  S10: {:08X}\n"
+                   "  S11: {:08X}\n"
+                   "  S12: {:08X}\n"
+                   "  S13: {:08X}\n"
+                   "  S14: {:08X}\n"
+                   "  S15: {:08X}\n"
+                   "  FPSCR: {:08X}\n"
+                   "  VPR: {:08X}\n",
+                   frame->extended.s0, frame->extended.s1, frame->extended.s2,
+                   frame->extended.s3, frame->extended.s4, frame->extended.s5,
+                   frame->extended.s6, frame->extended.s7, frame->extended.s8,
+                   frame->extended.s9, frame->extended.s10, frame->extended.s11,
+                   frame->extended.s12, frame->extended.s13,
+                   frame->extended.s14, frame->extended.s15,
+                   frame->extended.fpscr, frame->extended.vpr);
     }
-    printf("stack dump:\n");
+    fmt::print("stack dump:\n");
     const size_t words_to_dump = 64;
     print_words_in_hex("  ", sp, words_to_dump, 4);
     reset();
@@ -225,13 +226,13 @@ static void hardfault_handler(void *exception_stack_frame) {
 [[noreturn]] void panic(const char *file, int line, const char *message) {
     const auto sp = get_sp();
     const auto ipsr = get_ipsr();
-    printf("\n%s:%u: panic%s%s\n", file, line, (message ? ": " : "!"),
-           (message ? message : ""));
-    printf("uptime: %llu ms\n", get_uptime_ms().count());
-    printf("SP: %08" PRIX32 "\n", sp);
-    printf("IPSR: %u (%s mode)\n", ipsr,
-           (ipsr == 0 ? "thread" : "handler/interrupt"));
-    printf("stack dump:\n");
+    fmt::print("\n{}:{}: panic{}{}\n", file, line, (message ? ": " : "!"),
+               (message ? message : ""));
+    fmt::print("uptime: {} ms\n", get_uptime_ms().count());
+    fmt::print("SP: {:08X}\n", sp);
+    fmt::print("IPSR: {} ({} mode)\n", ipsr,
+               (ipsr == 0 ? "thread" : "handler/interrupt"));
+    fmt::print("stack dump:\n");
     const size_t words_to_dump = 64;
     print_words_in_hex("  ", sp, words_to_dump, 4);
     reset();
