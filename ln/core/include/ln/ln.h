@@ -51,6 +51,8 @@ extern "C"
 
 namespace ln {
 
+[[noreturn]] void panic(const char *file, int line);
+
 /**
  * @brief Reset the system (software reset).
  *
