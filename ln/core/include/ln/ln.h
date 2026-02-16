@@ -19,9 +19,11 @@ extern "C"
 #define LN_FILENAME                                                            \
     (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 
-    void ln_panic(const char *file, int line);
+    void ln_panic(const char *file, int line, const char *message);
 
-#define LN_PANIC() ln_panic(LN_FILENAME, __LINE__)
+#define LN_PANIC() ln_panic(LN_FILENAME, __LINE__, nullptr)
+
+#define LN_PANIC_WITH_MSG(message) ln_panic(LN_FILENAME, __LINE__, message)
 
 #define LN_ASSERT(expr, on_failure)                                            \
     do {                                                                       \
@@ -51,7 +53,7 @@ extern "C"
 
 namespace ln {
 
-[[noreturn]] void panic(const char *file, int line);
+[[noreturn]] void panic(const char *file, int line, const char *message);
 
 /**
  * @brief Reset the system (software reset).

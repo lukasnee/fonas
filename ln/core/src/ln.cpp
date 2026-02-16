@@ -9,5 +9,7 @@
 
 #include "ln/ln.h"
 
-extern "C" void ln_panic(const char *file, int line) { ln::panic(file, line); }
+extern "C" void ln_panic(const char *file, int line, const char *message) {
+    ln::panic(file, line, message);
+}
 extern "C" void ln_reset() { ln::reset(); }
