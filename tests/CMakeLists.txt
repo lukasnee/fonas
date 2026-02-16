@@ -9,5 +9,6 @@ include(CTest)
 include(Catch)
 
 add_executable(test_ringbuffer RingBufferTests.cpp)
-target_link_libraries(test_ringbuffer PRIVATE Catch2::Catch2WithMain ln)
+target_link_libraries(test_ringbuffer PRIVATE Catch2::Catch2WithMain ln::core
+                                              ln::port::stdcpp)
 catch_discover_tests(test_ringbuffer)
