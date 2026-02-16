@@ -8,9 +8,7 @@
  */
 
 #include "ln/ln.h"
-#include "ln/port.h"
-
-#include "FreeRTOS/Addons/Clock.hpp"
+#include "ln/port/exceptions.h"
 
 extern "C"
 {
@@ -245,14 +243,7 @@ void reset() {
     }
 }
 
-std::chrono::milliseconds get_uptime_ms() {
-    return duration_cast<std::chrono::milliseconds>(
-        FreeRTOS::Addons::Clock::now().time_since_epoch());
-}
-
 } // namespace ln
-
-extern "C" void vApplicationMallocFailedHook(void) { LN_PANIC(); }
 
 extern "C" void _ln_hardfault_handler(void *frame) {
     ln::hardfault_handler(frame);
