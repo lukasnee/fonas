@@ -19,7 +19,7 @@ namespace ln::shell {
 class History {
 
 public:
-    History(std::span<char> history_buf) : ring_buffer(history_buf) {}
+    explicit History(std::span<char> history_buf) : ring_buffer(history_buf) {}
 
     void add(std::string_view entry);
     std::ranges::subrange<ln::RingBufferView<char>::iterator> get();
