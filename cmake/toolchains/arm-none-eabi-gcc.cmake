@@ -38,14 +38,16 @@ set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 set(CMAKE_C_COMPILER_WORKS 1)
 set(CMAKE_CXX_COMPILER_WORKS 1)
 
-set(compiler_flags "-fstack-usage -fdata-sections -ffunction-sections -g")
+set(c_cxx_linker_flags "") # -flto
+set(c_cxx_asm_flags "-fstack-usage -fdata-sections -ffunction-sections -g")
 
-set(CMAKE_C_FLAGS " ${compiler_flags}")
+set(CMAKE_C_FLAGS "${c_cxx_asm_flags} ${c_cxx_linker_flags}")
 set(CMAKE_CXX_FLAGS
-    " ${compiler_flags} -fno-rtti -fno-exceptions -fno-threadsafe-statics")
-set(CMAKE_ASM_FLAGS " ${compiler_flags} -x assembler-with-cpp")
+    "${c_cxx_asm_flags} ${c_cxx_linker_flags} -fno-rtti -fno-exceptions -fno-threadsafe-statics"
+)
+set(CMAKE_ASM_FLAGS "-x assembler-with-cpp ${c_cxx_asm_flags}")
 set(CMAKE_EXE_LINKER_FLAGS
-    " --specs=nosys.specs -static -Wl,--gc-sections -Wl,--print-memory-usage -u _printf_float -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group"
+    "${c_cxx_linker_flags} --specs=nosys.specs -static -Wl,--gc-sections -Wl,--print-memory-usage -u _printf_float -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group"
     # -Wl,--verbose -Wl,--trace -u _scanf_float
 )
 
