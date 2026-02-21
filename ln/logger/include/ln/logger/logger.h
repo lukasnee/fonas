@@ -92,3 +92,142 @@ extern "C"
 #ifdef __cplusplus
 }
 #endif
+
+#ifdef __cplusplus
+
+#include "ln/File.hpp"
+
+#include "FreeRTOS/Mutex.hpp"
+
+#include <array>
+#include <cstdarg>
+#include <cstdio>
+#include <cstring>
+
+namespace ln::logger {
+
+using Level = LoggerLevel;
+
+struct Config {
+    /* Output stream */
+    File out_file = File(stdout);
+    /* Output buffer size */
+    static constexpr size_t out_buffer_size = 1024;
+    /* Output buffer flush threshold */
+    static constexpr size_t out_buffer_auto_flush_threshold =
+        out_buffer_size / 2;
+    /* Switch logger on/off at compile time */
+    static constexpr bool enabled_compile_time = true;
+    /* Switch logger on/off at run-time */
+    bool enabled_run_time = false;
+    /* Global log level printing threshold */
+    Level log_level = LOGGER_LEVEL_INFO;
+    /* Colorize log messages */
+    bool color = false;
+    /* end of line character(s) */
+    const char *eol = "\n";
+    /* Print log message header */
+    bool print_header_enabled = true;
+
+    static_assert(
+        out_buffer_auto_flush_threshold < out_buffer_size,
+        "Output buffer flush threshold must be less than output buffer size");
+};
+
+class Module : public LoggerModule {
+public:
+    explicit Module(std::string_view name,
+                    Level log_level = LOGGER_LEVEL_NOTSET);
+
+    template <typename... Args>
+    void debug(const std::string_view fmt, Args &&...args) {
+        log(LOGGER_LEVEL_DEBUG, fmt, std::forward<Args>(args)...);
+    }
+    template <typename... Args>
+    void info(const std::string_view fmt, Args &&...args) {
+        log(LOGGER_LEVEL_INFO, fmt, std::forward<Args>(args)...);
+    }
+    template <typename... Args>
+    void warning(const std::string_view fmt, Args &&...args) {
+        log(LOGGER_LEVEL_WARNING, fmt, std::forward<Args>(args)...);
+    }
+    template <typename... Args>
+    void error(const std::string_view fmt, Args &&...args) {
+        log(LOGGER_LEVEL_ERROR, fmt, std::forward<Args>(args)...);
+    }
+    template <typename... Args>
+    void critical(const std::string_view fmt, Args &&...args) {
+        log(LOGGER_LEVEL_CRITICAL, fmt, std::forward<Args>(args)...);
+    }
+    void log(const Level &level, std::string_view fmt, ...);
+
+    void set_level(Level log_level);
+};
+
+/**
+ * @brief RTOS logger with Python logging style.
+ */
+class Logger {
+public:
+    using Level = LoggerLevel;
+
+    static Logger &get_instance();
+
+    void enable();
+
+    static bool is_enabled();
+
+    void set_level(Level log_level);
+
+    bool set_config(const Config &config);
+
+    const Config &get_config() const { return config; }
+
+    int log(const LoggerModule &module, const Level &level,
+            std::string_view fmt, const va_list &arg_list);
+
+    /**
+     * @brief Flush the output buffer to the output stream. Note that buffer is
+     * flushed automatically when it reaches the
+     * Config::out_buffer_auto_flush_threshold size.
+     *
+     * This function is thread-safe and cannot be called from an ISR context.
+     */
+    void flush_buffer();
+
+protected:
+    Config config = {};
+
+    friend class Module;
+
+private:
+    Logger() = default;
+    Logger(Logger const &) = delete;
+    void operator=(Logger const &) = delete;
+    ~Logger() = default;
+
+    int log_unsafe(const LoggerModule &module, const Level &level,
+                   std::string_view fmt, const va_list &arg_list);
+
+    void clear_buffer_unsafe();
+    void flush_buffer_unsafe();
+
+    int print_header(File &file, const LoggerModule &module,
+                     const Level &level) const;
+    static int printf(File &file, const char *fmt, ...);
+
+    FreeRTOS::StaticRecursiveMutex mutex;
+
+    std::array<char, Config::out_buffer_size> buff_mem{};
+};
+
+/**
+ * @brief A shorthand for logger::Logger::get_instance().
+ *
+ * @retval Logger&
+ */
+Logger &get_instance();
+
+} // namespace ln::logger
+
+#endif // __cplusplus

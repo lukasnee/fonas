@@ -7,7 +7,7 @@
  * (at your option) any later version.
  */
 
-#include "ln/logger/logger.hpp"
+#include "ln/logger/logger.h"
 #include "ln/shell/CLI.hpp"
 
 #include "ln/shell/generic/cmds.hpp"
