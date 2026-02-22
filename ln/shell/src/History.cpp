@@ -15,7 +15,7 @@
 #include <ranges>
 #include <algorithm>
 
-LOG_MODULE(cli_history, LOGGER_LEVEL_INFO);
+LOG_MODULE(cli_history, ln::logger::Level::info);
 
 namespace ln::shell {
 

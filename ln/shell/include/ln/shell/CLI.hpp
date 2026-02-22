@@ -112,7 +112,7 @@ private:
     /** @return true if actually inserted */
     bool insert(char c);
 
-    LOG_MODULE_CLASS_MEMBER(CLI, LOGGER_LEVEL_NOTSET);
+    LOG_MODULE_CLASS_MEMBER(CLI, ln::logger::Level::notset);
 
     Buffer input;
     friend class History;

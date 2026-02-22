@@ -12,7 +12,7 @@
 
 #include "ln/shell/generic/cmds.hpp"
 
-LOG_MODULE(cmd_log, LOGGER_LEVEL_NOTSET);
+LOG_MODULE(cmd_log, ln::logger::Level::notset);
 
 namespace ln::shell {
 
