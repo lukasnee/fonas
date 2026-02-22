@@ -38,18 +38,7 @@ void Logger::flush_buffer() {
     if (!this->config.enabled_run_time) {
         return;
     }
-    this->flush_buffer_unsafe();
-}
-
-void Logger::clear_buffer_unsafe() {
-    ln::File file(this->buff_mem, "w"); // effectively clears the buffer
-}
-
-void Logger::flush_buffer_unsafe() {
-    std::fwrite(this->buff_mem.data(), 1,
-                std::min(strlen(this->buff_mem.data()), this->buff_mem.size()),
-                this->config.out_file.c_file());
-    this->clear_buffer_unsafe();
+    this->_flush_buffer();
 }
 
 void Logger::set_level(Level log_level) { this->config.log_level = log_level; }
@@ -90,13 +79,8 @@ int Logger::log(const Module &module, const Level &level, const char *fmt,
     if (!is_interrupt_context && !this->mutex.lock()) {
         return 0;
     }
-    const auto rc = this->log_unsafe(module, level, fmt, arg_list);
+    const auto rc = this->_log(module, level, fmt, arg_list);
     if (!is_interrupt_context) {
-        // TODO: what is this strlen doing here lol
-        if (strlen(this->buff_mem.data()) >
-            Config::out_buffer_auto_flush_threshold) {
-            this->flush_buffer_unsafe();
-        }
         this->mutex.unlock();
     }
     return rc;
@@ -106,18 +90,17 @@ int Logger::_log(const Module &module, const Level &level, const char *fmt,
                  va_list &arg_list) {
     int chars_printed = 0;
     if (this->config.print_header_enabled) {
-        LN_CHECK(this->print_header(buff_file, module, level), rc, rc < 0,
+        LN_CHECK(this->print_header(module, level), rc, rc < 0,
                  { chars_printed += rc; }, {});
     }
-    LN_CHECK(vfprintf(buff_file.c_file(), fmt, arg_list), rc, rc < 0,
+    LN_CHECK(this->vprintf_buf(fmt, arg_list), rc, rc < 0,
              { chars_printed += rc; }, {});
-    LN_CHECK(fprintf(buff_file.c_file(), "%s", this->config.eol), rc, rc < 0,
+    LN_CHECK(this->printf_buf("%s", this->config.eol), rc, rc < 0,
              { chars_printed += rc; }, {});
     return chars_printed;
 }
 
-int Logger::print_header(ln::File &file, const Module &module,
-                         const Level &level) const {
+int Logger::print_header(const Module &module, const Level &level) {
 
 #define ANSI_COLOR_BLACK "\e[30m"
 #define ANSI_COLOR_RED "\e[31m"
@@ -151,8 +134,8 @@ int Logger::print_header(ln::File &file, const Module &module,
                   &tm_buf);
     const auto current_task_name =
         FreeRTOS::Addons::Kernel::getCurrentTaskName();
-    return Logger::printf(
-        file, "%s.%03lu|%s%s%s|%s%s|%s|", datetime_buffer, ms,
+    return this->printf_buf(
+        "%s.%03lu|%s%s%s|%s%s|%s|", datetime_buffer, ms,
         (this->config.color ? level_descrs[level_descr_idx].color.data() : ""),
         level_descrs[level_descr_idx].tag_name.data(),
         (this->config.color ? ANSI_COLOR_DEFAULT : ""),
@@ -161,11 +144,11 @@ int Logger::print_header(ln::File &file, const Module &module,
         module.name.data());
 }
 
-int Logger::printf(ln::File &file, const char *fmt, ...) {
-    va_list args;
-    va_start(args, fmt);
-    const auto rc = vfprintf(file.c_file(), fmt, args);
-    va_end(args);
+int Logger::printf_buf(const char *fmt, ...) {
+    va_list arg_list;
+    va_start(arg_list, fmt);
+    const auto rc = this->vprintf_buf(fmt, arg_list);
+    va_end(arg_list);
     return rc;
 }
 

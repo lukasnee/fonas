@@ -55,9 +55,9 @@
 
 #include "ln/File.hpp"
 
-#include "FreeRTOS/Mutex.hpp"
+#include "FreeRTOS/Mutex.hpp" // TODO: create mutex interface and decouple from FreeRTOS
 
-#include <array>
+#include <span>
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>
@@ -79,11 +79,13 @@ enum Level {
 struct Config {
     /* Output stream */
     File out_file = File(stdout);
-    /* Output buffer size */
-    static constexpr size_t out_buffer_size = 1024;
-    /* Output buffer flush threshold */
-    static constexpr size_t out_buffer_auto_flush_threshold =
-        out_buffer_size / 2;
+    std::span<char> out_buf = {};
+    /* Output buffer flush threshold. If free space is less than this value
+    after a log message is written to the buffer, the content will be flushed to
+    the out_file. You probably want this size threshold to be of an average log
+    message or a bit more (there's a tradeoff between buffer use efficiency and
+    risk of overflow and loss of part of the message) */
+    static constexpr size_t out_buf_flush_threshold = 128;
     /* Switch logger on/off at compile time */
     static constexpr bool enabled_compile_time = true;
     /* Switch logger on/off at run-time */
@@ -96,10 +98,6 @@ struct Config {
     const char *eol = "\n";
     /* Print log message header */
     bool print_header_enabled = true;
-
-    static_assert(out_buffer_auto_flush_threshold < out_buffer_size,
-                  "Output buffer flush threshold must be less than output "
-                  "buffer size");
 };
 
 class Module;
@@ -157,7 +155,7 @@ private:
 
     FreeRTOS::StaticRecursiveMutex mutex;
 
-    std::array<char, Config::out_buffer_size> buff_mem{};
+    size_t out_buf_len = 0;
 };
 
 /**
