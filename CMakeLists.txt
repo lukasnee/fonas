@@ -5,6 +5,8 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 option(LN_FREERTOS "Enable FreeRTOS and features depending on it" OFF)
 option(LN_LITTLEFS "Enable LittleFS support" OFF)
 option(LN_LUA "Enable Lua scripting support" OFF)

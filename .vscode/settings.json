@@ -9,10 +9,15 @@
     },
     "cmake.buildDirectory": "${workspaceFolder}/build/arm-none-eabi-gcc-dbg",
     "cmake.useCMakePresets": "always",
-    "cmake.ctest.testExplorerIntegrationEnabled": false, // we use matepek.vscode-catch2-test-adapter instead
+    // This is so clangd operates on last configured build, no matter if build
+    // directory changes. The --compile-commands-dir in clangd.arguments must be
+    // set to the same dir.
+    "cmake.copyCompileCommands": "${workspaceFolder}/build/compile_commands.json",
+    // We use matepek.vscode-catch2-test-adapter instead
+    "cmake.ctest.testExplorerIntegrationEnabled": false,
     "clangd.enable": true,
     "clangd.arguments": [
-        "--compile-commands-dir=${workspaceFolder}/build/arm-none-eabi-gcc-dbg",
+        "--compile-commands-dir=${workspaceFolder}/build",
         "--query-driver=**", // clangd becomes aware of arm-none-eabi-gcc and its standard includes
         "--background-index",
         "--clang-tidy",
