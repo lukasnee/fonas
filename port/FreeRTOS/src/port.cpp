@@ -10,12 +10,17 @@
 #include "ln/ln.h"
 
 #include "FreeRTOS/Addons/Clock.hpp"
+#include "FreeRTOS/Addons/Kernel.hpp"
 
 namespace ln {
 
 std::chrono::milliseconds get_uptime_ms() {
     return duration_cast<std::chrono::milliseconds>(
         FreeRTOS::Addons::Clock::now().time_since_epoch());
+}
+
+bool interrupt_context() {
+    return FreeRTOS::Addons::Kernel::isInsideInterrupt();
 }
 
 } // namespace ln

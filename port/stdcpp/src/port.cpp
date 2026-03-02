@@ -35,4 +35,6 @@ std::chrono::milliseconds get_uptime_ms() {
     return std::chrono::duration_cast<std::chrono::milliseconds>(elapsed);
 }
 
+bool interrupt_context() { return false; }
+
 } // namespace ln

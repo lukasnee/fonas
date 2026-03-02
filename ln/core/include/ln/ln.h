@@ -69,6 +69,13 @@ void reset();
  */
 std::chrono::milliseconds get_uptime_ms();
 
+/**
+ * @brief Check if the current context is an interrupt context.
+ *
+ * @note Port-specific implementation.
+ */
+bool interrupt_context();
+
 } // namespace ln
 
 #endif // __cplusplus
