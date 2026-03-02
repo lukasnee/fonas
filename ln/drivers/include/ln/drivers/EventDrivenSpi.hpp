@@ -11,6 +11,7 @@
 
 #include "ln/ln.h"
 
+// TODO: platform abstraction for these components
 #include "FreeRTOS/Mutex.hpp"
 #include "FreeRTOS/Semaphore.hpp"
 #include "FreeRTOS/Addons/Timeout.hpp"

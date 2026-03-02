@@ -7,11 +7,17 @@
  * (at your option) any later version.
  */
 
+#include "ln/MutexI.hpp"
+
 #include <chrono>
 #include <cstdlib>
 #include <cstdio>
 
 namespace ln {
+
+std::chrono::milliseconds MutexBase::max_timeout() {
+    return std::chrono::milliseconds::max();
+}
 
 void panic(const char *file, int line, const char *message) {
     printf("\n%s:%d: panic%s%s\n", file, line, (message ? ": " : "!"),

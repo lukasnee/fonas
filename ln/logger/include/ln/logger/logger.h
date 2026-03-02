@@ -54,8 +54,7 @@
 #endif // LN_LOGGER
 
 #include "ln/File.hpp"
-
-#include "FreeRTOS/Mutex.hpp" // TODO: create mutex interface and decouple from FreeRTOS
+#include "ln/Mutex.hpp"
 
 #include <span>
 #include <cstdarg>
@@ -149,11 +148,7 @@ private:
     int printf_buf(const char *fmt, ...);
     int vprintf_buf(const char *fmt, va_list &args);
 
-    int print_header(File &file, const Module &module,
-                     const Level &level) const;
-    static int printf(File &file, const char *fmt, ...);
-
-    FreeRTOS::StaticRecursiveMutex mutex;
+    RecursiveMutex mutex;
 
     size_t out_buf_len = 0;
 };
