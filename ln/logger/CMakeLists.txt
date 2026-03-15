@@ -16,3 +16,7 @@ add_library(ln_logger_cmds INTERFACE)
 add_library(ln::logger::cmds ALIAS ln_logger_cmds)
 target_sources(ln_logger_cmds INTERFACE src/cmds.cpp)
 target_link_libraries(ln_logger_cmds INTERFACE ln::logger ln::shell)
+
+if(BUILD_TESTING AND PROJECT_IS_TOP_LEVEL)
+  add_subdirectory(tests)
+endif()
