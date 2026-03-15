@@ -1,0 +1,3 @@
+add_executable(ln_logger_test logger_test.cpp)
+target_link_libraries(ln_logger_test PRIVATE Catch2::Catch2WithMain ln_logger)
+catch_discover_tests(ln_logger_test)

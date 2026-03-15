@@ -12,26 +12,43 @@ option(LN_LITTLEFS "Enable LittleFS support" OFF)
 option(LN_LUA "Enable Lua scripting support" OFF)
 option(LN_FMT "Enable fmt formatting library" OFF)
 
+set(LN_PORT
+    ""
+    CACHE STRING "")
+
 project(
   ln
   VERSION 0.1.0
   LANGUAGES C CXX)
 
-set(CROSSCOMPILE_TEST false)
-if(PROJECT_IS_TOP_LEVEL AND CMAKE_CROSSCOMPILING)
-  set(CROSSCOMPILE_TEST true)
-endif()
-
-if(CROSSCOMPILE_TEST)
-  set(LN_FREERTOS ON)
-  set(LN_LUA ON)
-  set(FREERTOS_PORT
-      GCC_ARM_CM7
-      CACHE STRING "")
-  set(FREERTOS_HEAP 4)
-  add_library(freertos_config INTERFACE)
-  target_include_directories(
-    freertos_config INTERFACE ${CMAKE_CURRENT_LIST_DIR}/tests/config/include)
+if(PROJECT_IS_TOP_LEVEL)
+  set(LN_FMT ON)
+  if(CMAKE_CROSSCOMPILING)
+    message(STATUS "Cross-compile configuration")
+    set(LN_PORT "FreeRTOS")
+    set(LN_FREERTOS ON)
+    set(LN_LUA ON)
+    set(FREERTOS_PORT
+        GCC_ARM_CM7
+        CACHE STRING "")
+    set(FREERTOS_HEAP 4)
+    add_library(freertos_config INTERFACE)
+    target_include_directories(
+      freertos_config
+      INTERFACE ${CMAKE_CURRENT_LIST_DIR}/port/FreeRTOS/testing/include)
+  else()
+    message(STATUS "Unit test configuration")
+    set(LN_PORT "stdcpp")
+    include(FetchContent)
+    FetchContent_Declare(
+      Catch2
+      GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+      GIT_TAG v3.11.0)
+    FetchContent_MakeAvailable(Catch2)
+    include(Catch)
+    include(CTest)
+    enable_testing()
+  endif()
 endif()
 
 include(cmake/clang-tidy.cmake)
@@ -49,15 +66,11 @@ if(LN_FMT)
   include(extern/fmt/fmt.cmake)
 endif()
 
+add_subdirectory(port)
+
 # NOTE: ln library is composed of multiple ln::* modular targets, the ln is an
 # umbrella target that includes all of them for convenience.
 add_library(ln INTERFACE)
 add_library(ln::ln ALIAS ln)
 
 add_subdirectory(ln)
-add_subdirectory(port)
-
-if(PROJECT_IS_TOP_LEVEL AND NOT CMAKE_CROSSCOMPILING)
-  enable_testing()
-  add_subdirectory(tests)
-endif()

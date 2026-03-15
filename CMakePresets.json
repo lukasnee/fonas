@@ -53,10 +53,7 @@
         },
         {
             "name": "tests",
-            "configurePreset": "gcc",
-            "targets": [
-                "test_ringbuffer"
-            ]
+            "configurePreset": "gcc"
         }
     ],
     "testPresets": [

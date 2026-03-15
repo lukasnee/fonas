@@ -1,6 +1,7 @@
 add_library(ln_core)
 add_library(ln::core ALIAS ln_core)
 target_link_libraries(ln INTERFACE ln::core)
+target_link_libraries(ln_core PUBLIC ln::port::${LN_PORT})
 target_sources(ln_core PRIVATE src/ln.cpp)
 target_include_directories(ln_core PUBLIC include)
 
@@ -9,3 +10,7 @@ add_library(ln::core::shell_cmds ALIAS ln_core_shell_cmds)
 target_link_libraries(ln INTERFACE ln::core::shell_cmds)
 target_link_libraries(ln_core_shell_cmds INTERFACE ln::core ln::shell)
 target_sources(ln_core_shell_cmds INTERFACE src/ln_shell_cmds.cpp)
+
+if(BUILD_TESTING AND PROJECT_IS_TOP_LEVEL)
+  add_subdirectory(tests)
+endif()

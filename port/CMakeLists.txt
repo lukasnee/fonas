@@ -1,5 +1,7 @@
 add_subdirectory(stdcpp)
 if(LN_FREERTOS)
   add_subdirectory(FreeRTOS)
-  add_subdirectory(STM32F3_FreeRTOS)
+  if(NOT PROJECT_IS_TOP_LEVEL)
+    add_subdirectory(STM32F3_FreeRTOS)
+  endif()
 endif()
