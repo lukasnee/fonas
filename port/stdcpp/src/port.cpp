@@ -15,7 +15,7 @@
 
 namespace ln {
 
-std::chrono::milliseconds MutexBase::max_timeout() {
+std::chrono::milliseconds MutexI::max_timeout() {
     return std::chrono::milliseconds::max();
 }
 
@@ -36,5 +36,7 @@ std::chrono::milliseconds get_uptime_ms() {
 }
 
 bool interrupt_context() { return false; }
+
+std::string_view get_task_name() { return {}; }
 
 } // namespace ln

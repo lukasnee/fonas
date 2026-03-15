@@ -11,6 +11,8 @@
 
 #include <string.h> // for strrchr
 
+#include <string_view>
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -75,6 +77,15 @@ std::chrono::milliseconds get_uptime_ms();
  * @note Port-specific implementation.
  */
 bool interrupt_context();
+
+/**
+ * @brief Get the name of the current task. Returns nullptr if not in a task
+ * context or if the task does not have a name (interrupt_context() returns
+ * true).
+ *
+ * @note Port-specific implementation.
+ */
+std::string_view get_task_name();
 
 } // namespace ln
 

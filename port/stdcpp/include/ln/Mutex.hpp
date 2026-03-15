@@ -17,12 +17,11 @@
 namespace ln {
 
 class Mutex : public MutexI {
-public:
-private:
-    bool lock(const ::std::chrono::milliseconds &timeout) final {
+protected:
+    bool ll_lock(const ::std::chrono::milliseconds &timeout) final {
         return this->mutex.try_lock_for(timeout);
     }
-    bool unlock() final {
+    bool ll_unlock() final {
         this->mutex.unlock();
         return true;
     }
@@ -30,13 +29,12 @@ private:
     std::timed_mutex mutex;
 };
 
-class RecursiveMutex : public RecursiveMutexI {
-public:
-private:
-    bool lock(const ::std::chrono::milliseconds &timeout) final {
+class RecursiveMutex : public MutexI {
+protected:
+    bool ll_lock(const ::std::chrono::milliseconds &timeout) final {
         return this->recursive_mutex.try_lock_for(timeout);
     }
-    bool unlock() final {
+    bool ll_unlock() final {
         this->recursive_mutex.unlock();
         return true;
     }

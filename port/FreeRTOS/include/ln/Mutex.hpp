@@ -10,34 +10,31 @@
 #pragma once
 
 #include "ln/MutexI.hpp"
+#include "projdefs.h"
 
 #include <FreeRTOS/Mutex.hpp>
-#include <FreeRTOS/Addons/Clock.hpp>
+#include <FreeRTOS/Kernel.hpp>
 
 namespace ln {
 
-static std::chrono::milliseconds max_timeout() {
-    return FreeRTOS::Addons::Clock::duration::max();
-}
-
 class Mutex : public MutexI {
-public:
-private:
-    bool lock(const std::chrono::milliseconds &timeout) final {
-        return this->mutex.take(timeout);
+protected:
+    bool ll_lock(const std::chrono::milliseconds &timeout) final {
+        return this->mutex.lock(pdMS_TO_TICKS(timeout.count()));
     }
-    bool unlock() final { return this->mutex.give(); }
+
+    bool ll_unlock() final { return this->mutex.unlock(); }
 
     FreeRTOS::StaticMutex mutex;
 };
 
-class RecursiveMutex : public RecursiveMutexI {
-public:
-private:
-    bool lock(const std::chrono::milliseconds &timeout) final {
-        return this->recursive_mutex.take(timeout);
+class RecursiveMutex : public MutexI {
+protected:
+    bool ll_lock(const std::chrono::milliseconds &timeout) final {
+        return this->recursive_mutex.lock(pdMS_TO_TICKS(timeout.count()));
     }
-    bool unlock() final { return this->recursive_mutex.give(); }
+
+    bool ll_unlock() final { return this->recursive_mutex.unlock(); }
 
     FreeRTOS::StaticRecursiveMutex recursive_mutex;
 };

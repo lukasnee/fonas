@@ -9,18 +9,51 @@
 
 #include "ln/ln.h"
 
-#include "FreeRTOS/Addons/Clock.hpp"
-#include "FreeRTOS/Addons/Kernel.hpp"
+#include "ln/Clock.hpp"
+#include "ln/MutexI.hpp"
+
+#include "FreeRTOS/Kernel.hpp"
 
 namespace ln {
 
-std::chrono::milliseconds get_uptime_ms() {
-    return duration_cast<std::chrono::milliseconds>(
-        FreeRTOS::Addons::Clock::now().time_since_epoch());
+/**
+ * @brief Converts a TickType_t to time_point.
+ *
+ * @note Expressed in similar style as
+ * <https://en.cppreference.com/w/cpp/chrono/system_clock/from_time_t.html>.
+ *
+ * @param t TickType_t value to convert.
+ * @return time_point The time_point corresponding to the TickType_t.
+ */
+static constexpr Clock::time_point from_tick_count(TickType_t t) noexcept {
+    return Clock::time_point{std::chrono::milliseconds(
+        t * (static_cast<TickType_t>(std::milli::den)) / configTICK_RATE_HZ)};
 }
 
-bool interrupt_context() {
-    return FreeRTOS::Addons::Kernel::isInsideInterrupt();
+Clock::time_point Clock::now() noexcept {
+    return fromTickCount(interrupt_context()
+                             ? FreeRTOS::Kernel::getTickCount()
+                             : FreeRTOS::Kernel::getTickCountFromISR());
+}
+
+static_assert(Clock::duration::max().count() == portMAX_DELAY,
+              "Clock::duration::max() must be equivalent "
+              "to portMAX_DELAY");
+
+std::chrono::milliseconds MutexI::max_timeout() {
+    return Clock::duration::max();
+}
+
+std::chrono::milliseconds get_uptime_ms() {
+    return duration_cast<std::chrono::milliseconds>(
+        Clock::now().time_since_epoch());
+}
+
+bool interrupt_context() { return xPortIsInsideInterrupt(); }
+
+std::string_view get_task_name() {
+    return (interrupt_context() ? nullptr
+                                : pcTaskGetName(xTaskGetCurrentTaskHandle()));
 }
 
 } // namespace ln

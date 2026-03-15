@@ -9,6 +9,7 @@
 
 #include "ln/logger/logger.h"
 #include "ln/ln.h"
+#include "ln/Clock.hpp"
 
 #include <cstdio>
 
@@ -31,10 +32,10 @@ void Logger::flush_buffer() {
     if constexpr (!Config::enabled_compile_time) {
         return;
     }
-    if (FreeRTOS::Addons::Kernel::isInsideInterrupt()) {
+    if (ln::interrupt_context()) {
         LN_PANIC();
     }
-    FreeRTOS::Addons::LockGuard lock_guard(this->mutex);
+    LockGuard lock_guard(this->mutex);
     if (!this->config.enabled_run_time) {
         return;
     }
