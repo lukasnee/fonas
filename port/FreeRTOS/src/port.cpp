@@ -31,9 +31,9 @@ static constexpr Clock::time_point from_tick_count(TickType_t t) noexcept {
 }
 
 Clock::time_point Clock::now() noexcept {
-    return fromTickCount(interrupt_context()
-                             ? FreeRTOS::Kernel::getTickCount()
-                             : FreeRTOS::Kernel::getTickCountFromISR());
+    return from_tick_count(interrupt_context()
+                               ? FreeRTOS::Kernel::getTickCount()
+                               : FreeRTOS::Kernel::getTickCountFromISR());
 }
 
 static_assert(Clock::duration::max().count() == portMAX_DELAY,
@@ -52,8 +52,7 @@ std::chrono::milliseconds get_uptime_ms() {
 bool interrupt_context() { return xPortIsInsideInterrupt(); }
 
 std::string_view get_task_name() {
-    return (interrupt_context() ? nullptr
-                                : pcTaskGetName(xTaskGetCurrentTaskHandle()));
+    return pcTaskGetName(xTaskGetCurrentTaskHandle());
 }
 
 } // namespace ln

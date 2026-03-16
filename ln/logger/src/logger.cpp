@@ -75,8 +75,7 @@ void Module::set_level(Level log_level) { this->log_level = log_level; }
 
 int Logger::log(const Module &module, const Level &level, const char *fmt,
                 va_list &arg_list) {
-    const auto is_interrupt_context =
-        FreeRTOS::Addons::Kernel::isInsideInterrupt();
+    const auto is_interrupt_context = ln::interrupt_context();
     if (!is_interrupt_context && !this->mutex.lock()) {
         return 0;
     }
@@ -125,7 +124,6 @@ int Logger::print_header(const Module &module, const Level &level) {
                                                    {"CRT", ANSI_COLOR_RED}};
     const auto level_clamped = std::min(level, Level::_max);
     const auto level_descr_idx = level_clamped == 0 ? 0 : ((level - 1) / 10);
-    using Clock = FreeRTOS::Addons::Clock;
     const auto [tm_buf, sec_remainder] = Clock::to_utc_tm_rem(Clock::now());
     char datetime_buffer[sizeof("YYYY-MM-DD HH:MM:SS")];
     const auto ms = static_cast<uint32_t>(
@@ -133,14 +131,13 @@ int Logger::print_header(const Module &module, const Level &level) {
             .count());
     std::strftime(datetime_buffer, sizeof(datetime_buffer), "%Y-%m-%d %H:%M:%S",
                   &tm_buf);
-    const auto current_task_name =
-        FreeRTOS::Addons::Kernel::getCurrentTaskName();
+    const auto current_task_name = ln::get_task_name();
     return this->printf_buf(
         "%s.%03lu|%s%s%s|%s%s|%s|", datetime_buffer, ms,
         (this->config.color ? level_descrs[level_descr_idx].color.data() : ""),
         level_descrs[level_descr_idx].tag_name.data(),
         (this->config.color ? ANSI_COLOR_DEFAULT : ""),
-        (FreeRTOS::Addons::Kernel::isInsideInterrupt() ? "ISR!" : ""),
+        (ln::interrupt_context() ? "ISR!" : ""),
         (current_task_name.empty() ? "-" : current_task_name.data()),
         module.name.data());
 }

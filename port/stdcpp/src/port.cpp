@@ -8,12 +8,20 @@
  */
 
 #include "ln/MutexI.hpp"
+#include "ln/Clock.hpp"
 
 #include <chrono>
 #include <cstdlib>
 #include <cstdio>
 
 namespace ln {
+
+const auto g_start_time = std::chrono::steady_clock::now();
+
+Clock::time_point Clock::now() noexcept {
+    return Clock::time_point{std::chrono::duration_cast<Clock::duration>(
+        std::chrono::steady_clock::now() - g_start_time)};
+}
 
 std::chrono::milliseconds MutexI::max_timeout() {
     return std::chrono::milliseconds::max();
@@ -27,12 +35,9 @@ void panic(const char *file, int line, const char *message) {
 
 void reset() { std::abort(); }
 
-const auto g_start_time = std::chrono::steady_clock::now();
-
 std::chrono::milliseconds get_uptime_ms() {
-    const auto now = std::chrono::steady_clock::now();
-    const auto elapsed = now - g_start_time;
-    return std::chrono::duration_cast<std::chrono::milliseconds>(elapsed);
+    return std::chrono::duration_cast<std::chrono::milliseconds>(
+        Clock::now().time_since_epoch());
 }
 
 bool interrupt_context() { return false; }

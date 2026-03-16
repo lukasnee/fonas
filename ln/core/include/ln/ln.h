@@ -11,8 +11,6 @@
 
 #include <string.h> // for strrchr
 
-#include <string_view>
-
 #ifdef __cplusplus
 extern "C"
 {
@@ -52,6 +50,7 @@ extern "C"
 #ifdef __cplusplus
 
 #include <chrono>
+#include <string_view>
 
 namespace ln {
 
@@ -79,9 +78,8 @@ std::chrono::milliseconds get_uptime_ms();
 bool interrupt_context();
 
 /**
- * @brief Get the name of the current task. Returns nullptr if not in a task
- * context or if the task does not have a name (interrupt_context() returns
- * true).
+ * @brief Get the name of the current task. Invalid if interrupt_context() is
+ * true.
  *
  * @note Port-specific implementation.
  */
