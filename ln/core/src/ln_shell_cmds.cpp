@@ -43,18 +43,16 @@ Commands:
                                const auto invalid_address = 0xbadcafe;
                                return *reinterpret_cast<Err *>(invalid_address);
                            }
-                           ctx.cli.printf("unknown subcommand '%.*s'\n",
-                                          static_cast<int>(ctx.args[0].size()),
-                                          ctx.args[0].data());
+                           ctx.cli.print("unknown subcommand '{}'\n",
+                                         ctx.args[0]);
                            return Err::badArg;
                        }}};
 
-Cmd uptime_cmd{
-    Cmd::Cfg{.name = "uptime",
-             .short_description = "show system uptime in milliseconds",
-             .fn = [](Cmd::Ctx ctx) {
-                 ctx.cli.printf("%lu\n", ln::get_uptime_ms().count());
-                 return Err::ok;
-             }}};
+Cmd uptime_cmd{Cmd::Cfg{.name = "uptime",
+                        .short_description = "show system uptime",
+                        .fn = [](Cmd::Ctx ctx) {
+                            ctx.cli.print("{}\n", ln::get_uptime_ms());
+                            return Err::ok;
+                        }}};
 
 } // namespace ln::shell

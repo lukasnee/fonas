@@ -77,8 +77,7 @@ const Cmd *Cmd::find_child_cmd_by_name(std::string_view name) const {
 }
 
 void Cmd::List::print_short_help(CLI &cli, std::size_t max_depth) const {
-    cli.printf("%.*s commands:\n", static_cast<int>(this->name.size()),
-               this->name.data());
+    cli.print("{} commands:\n", this->name);
     for (const auto &cmd : this->data) {
         cmd.print_short_help(cli, max_depth);
     }
@@ -96,7 +95,7 @@ void Cmd::print_short_help(CLI &cli, std::size_t max_depth,
         max_depth += curr_cmd_depth;
         depth += curr_cmd_depth;
     }
-    printf("  ");
+    cli.print("  ");
     for (std::size_t i = depth; i > 0; i--) {
         auto cmd = this;
         for (std::size_t j = 0; j < i; j++) {

@@ -10,6 +10,8 @@
 #include "ln/MutexI.hpp"
 #include "ln/Clock.hpp"
 
+#include <fmt/core.h>
+
 #include <chrono>
 #include <cstdlib>
 #include <cstdio>
@@ -28,8 +30,8 @@ std::chrono::milliseconds MutexI::max_timeout() {
 }
 
 void panic(const char *file, int line, const char *message) {
-    printf("\n%s:%d: panic%s%s\n", file, line, (message ? ": " : "!"),
-           (message ? message : ""));
+    fmt::print("\n{}:{}: panic{}{}\n", file, line, (message ? ": " : "!"),
+               (message ? message : ""));
     std::abort();
 }
 

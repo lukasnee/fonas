@@ -17,6 +17,7 @@ extern "C"
 
 #include <fmt/core.h>
 #include <fmt/ranges.h>
+#include <fmt/chrono.h>
 
 #include <cstdint>
 #include <inttypes.h>
@@ -122,7 +123,7 @@ static void hardfault_handler(void *exception_stack_frame) {
     const FType ftype = exc_return & (1 << 4) ? FType::basic : FType::extended;
 
     fmt::print("\nsystem hardfault!\n");
-    fmt::print("uptime: {} ms\n", get_uptime_ms().count());
+    fmt::print("uptime: {}\n", ln::get_uptime_ms());
     const uint32_t sp =
         reinterpret_cast<uint32_t>(frame) +
         (ftype == FType::basic ? sizeof(ExceptionStackFrameBasic)

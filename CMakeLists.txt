@@ -10,7 +10,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 option(LN_FREERTOS "Enable FreeRTOS and features depending on it" OFF)
 option(LN_LITTLEFS "Enable LittleFS support" OFF)
 option(LN_LUA "Enable Lua scripting support" OFF)
-option(LN_FMT "Enable fmt formatting library" OFF)
 
 set(LN_PORT
     ""
@@ -22,7 +21,6 @@ project(
   LANGUAGES C CXX)
 
 if(PROJECT_IS_TOP_LEVEL)
-  set(LN_FMT ON)
   if(CMAKE_CROSSCOMPILING)
     message(STATUS "Cross-compile configuration")
     set(LN_PORT "FreeRTOS")
@@ -53,6 +51,7 @@ endif()
 
 include(cmake/clang-tidy.cmake)
 
+include(extern/fmt/fmt.cmake)
 if(LN_FREERTOS)
   add_subdirectory(extern/FreeRTOS-Cpp)
 endif()
@@ -61,9 +60,6 @@ if(LN_LITTLEFS)
 endif()
 if(LN_LUA)
   add_subdirectory(extern/lua)
-endif()
-if(LN_FMT)
-  include(extern/fmt/fmt.cmake)
 endif()
 
 add_subdirectory(port)

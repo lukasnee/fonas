@@ -28,7 +28,7 @@ public:
                         const std::string_view line)
         : Task{tskIDLE_PRIORITY + 1, 1000, "repeat"}, cli{cli}, period{period} {
         if (line.size() >= line_buf.size()) {
-            this->cli.printf("error: arguments too long for repeat command\n");
+            this->cli.print("error: arguments too long for repeat command\n");
             return;
         }
         this->line = std::string_view{
@@ -64,7 +64,7 @@ Cmd repeat{Cmd::Cfg{
             thread->~RepeatCommandThread();
             vPortFree(thread);
             thread = nullptr;
-            ctx.cli.printf("repeat thread stopped\n");
+            ctx.cli.print("repeat thread stopped\n");
             return Err::ok;
         }
         else if (ctx.args.size() == 2) {
@@ -74,15 +74,14 @@ Cmd repeat{Cmd::Cfg{
             auto expr_sv = ctx.args[1];
             void *thread_obj_mem = pvPortMalloc(sizeof(RepeatCommandThread));
             if (!thread_obj_mem) {
-                ctx.cli.printf(
+                ctx.cli.print(
                     "error: could not allocate memory for repeat thread\n");
                 return Err::fail;
             }
             const auto repeat_period = std::chrono::milliseconds(
                 std::strtoul(ctx.args[0].data(), nullptr, 10));
-            ctx.cli.printf("repeating \'%.*s\' every %lu ms\n\n",
-                           expr_sv.size(), expr_sv.data(),
-                           repeat_period.count());
+            ctx.cli.print("repeating \'{}\' every {}\n\n", expr_sv,
+                          repeat_period);
             thread = new (thread_obj_mem)
                 RepeatCommandThread(ctx.cli, repeat_period, expr_sv);
             return Err::ok;

@@ -15,10 +15,10 @@ void hexdump(CLI &cli, const uint32_t &address, const size_t &size) {
     const size_t bytes_per_line = 16;
     uint8_t *buf = reinterpret_cast<uint8_t *>(address);
     for (size_t i = 0; i < size; i += bytes_per_line) {
-        cli.printf("%08x: ", address + i);
+        cli.print("{:08x}: ", address + i);
         for (size_t j = 0; j < bytes_per_line; j++) {
             if (i + j < size) {
-                cli.printf("%02x ", buf[i + j]);
+                cli.print("{:02x} ", buf[i + j]);
             }
             else {
                 cli.print("   ");
@@ -27,7 +27,8 @@ void hexdump(CLI &cli, const uint32_t &address, const size_t &size) {
         cli.print(' ');
         for (size_t j = 0; j < bytes_per_line; j++) {
             if (i + j < size) {
-                cli.print(isprint(buf[i + j]) ? buf[i + j] : '.');
+                cli.print(isprint(buf[i + j]) ? static_cast<char>(buf[i + j])
+                                              : '.');
             }
         }
         cli.print('\n');

@@ -45,16 +45,6 @@ int CLI::print(const char *str) {
     return rc;
 }
 
-int CLI::printf(const char *fmt, ...) {
-    va_list args;
-    va_start(args, fmt);
-    std::array<char, Config::printf_buffer_size> tx_buf;
-    vsnprintf(tx_buf.data(), tx_buf.size(), fmt, args);
-    int chars_printed = this->print(tx_buf.data());
-    va_end(args);
-    return chars_printed;
-}
-
 std::tuple<const Cmd *, std::span<const std::string_view>> CLI::find_cmd(
     std::span<const std::string_view> args) {
     if (args.empty()) {
@@ -143,8 +133,8 @@ Err CLI::execute(const Cmd &cmd, const std::span<const std::string_view> args,
             }
             this->print("\nFAIL");
             if (err != Err::fail) {
-                this->printf(
-                    " (%d)",
+                this->print(
+                    " ({})",
                     static_cast<std::underlying_type_t<decltype(err)>>(err));
             }
             if (this->config.colored_output) {
@@ -251,7 +241,9 @@ Err CLI::execute(std::string_view input) {
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 char CLI::getc_or_handle_escape_sequences() {
-    std::array<char, 10> buf;
+    const size_t buf_capacity =
+        10; // enough to hold any escape sequence we care about
+    std::array<char, buf_capacity> buf;
     std::size_t buf_size = 0;
     auto getc = [&]() -> char {
         const auto c = std::fgetc(this->config.istream.c_file());
@@ -261,8 +253,8 @@ char CLI::getc_or_handle_escape_sequences() {
         return c;
     };
     auto handle_unknown = [&]() {
-        LOG_WARNING("Unknown escape sequence: %.*s", static_cast<int>(buf_size),
-                    buf.data());
+        LOG_WARNING("Unknown escape sequence: {}",
+                    std::string_view(buf.data(), buf_size));
     };
     while (true) {
         char c = getc();
@@ -437,7 +429,7 @@ bool CLI::step_cursor_left() {
         distance += this->get_prompt_length();
     }
     if (distance > 0) {
-        this->printf("\e[%zuC", distance);
+        this->print("\e[{}C", distance);
     }
     return true;
 }
@@ -564,24 +556,24 @@ void CLI::clear_screen() {
     this->print("\e[2J\e[H");
     this->print_prompt();
     this->print(this->input.get().substr(0, this->input.get_cursor_pos()));
-    this->printf("\e[s");
+    this->print("\e[s");
     this->print(this->input.get().substr(this->input.get_cursor_pos()));
-    this->printf("\e[u");
+    this->print("\e[u");
 }
 
 void CLI::clear_input() {
     const auto lines_back =
         std::count(this->input.get().begin(), this->input.cursor(), '\n');
     if (lines_back > 0) {
-        this->printf("\e[%zuF\e[%zuC", lines_back, this->get_prompt_length());
+        this->print("\e[{}F\e[{}C", lines_back, this->get_prompt_length());
     }
     else {
         auto num_of_chars_on_left = this->input.get_distance_to_begin();
         if (num_of_chars_on_left > 0) {
-            this->printf("\e[%zuD", num_of_chars_on_left);
+            this->print("\e[{}D", num_of_chars_on_left);
         }
     }
-    this->printf("\e[J", this->get_prompt_length());
+    this->print("\e[J", this->get_prompt_length());
     this->input.clear();
 }
 
@@ -600,13 +592,13 @@ bool CLI::delete_char() {
         num_chars_on_left += this->get_prompt_length();
     }
     if (num_chars_on_left > 0) {
-        this->printf("\e[%zuC", num_chars_on_left);
+        this->print("\e[{}C", num_chars_on_left);
     }
     auto num_chars_on_right = this->input.get_distance_to_next('\n');
     if (num_chars_on_right > 0) {
         this->print(this->input.get().substr(this->input.get_cursor_pos(),
                                              num_chars_on_right));
-        this->printf("\e[%zuD", num_chars_on_right);
+        this->print("\e[{}D", num_chars_on_right);
     }
     return true;
 }
@@ -621,19 +613,19 @@ bool CLI::backspace_char() {
         this->print("\b\e[P");
         return true;
     }
-    this->printf("\e[M\e[1A");
+    this->print("\e[M\e[1A");
     auto num_chars_on_left = this->input.get_distance_to_prev('\n');
     if (num_chars_on_left == this->input.get_cursor_pos()) {
         num_chars_on_left += this->get_prompt_length();
     }
     if (num_chars_on_left > 0) {
-        this->printf("\e[%zuC", num_chars_on_left);
+        this->print("\e[{}C", num_chars_on_left);
     }
     auto num_chars_on_right = this->input.get_distance_to_next('\n');
     if (num_chars_on_right > 0) {
         this->print(this->input.get().substr(this->input.get_cursor_pos(),
                                              num_chars_on_right));
-        this->printf("\e[%zuD", num_chars_on_right);
+        this->print("\e[{}D", num_chars_on_right);
     }
     return true;
 }
@@ -648,7 +640,7 @@ bool CLI::insert(char c) {
         if (num_chars_on_right > 0) {
             this->print(this->input.get().substr(this->input.get_cursor_pos(),
                                                  num_chars_on_right));
-            this->printf("\e[%zuD", num_chars_on_right);
+            this->print("\e[{}D", num_chars_on_right);
         }
         return true;
     }

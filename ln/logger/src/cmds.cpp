@@ -39,9 +39,7 @@ Cmd cmd_log_info{Cmd::Cfg{.parent_cmd = &cmd_log,
                           .usage = "<msg:str>",
                           .short_description = "log info message",
                           .fn = [](Cmd::Ctx ctx) {
-                              LOG_INFO("%.*s",
-                                       static_cast<int>(ctx.args[0].size()),
-                                       ctx.args[0].data());
+                              LOG_INFO("{}", ctx.args[0]);
                               return Err::ok;
                           }}};
 
@@ -50,9 +48,7 @@ Cmd cmd_log_warn{Cmd::Cfg{.parent_cmd = &cmd_log,
                           .usage = "<msg:str>",
                           .short_description = "log warning message",
                           .fn = [](Cmd::Ctx ctx) {
-                              LOG_WARNING("%.*s",
-                                          static_cast<int>(ctx.args[0].size()),
-                                          ctx.args[0].data());
+                              LOG_WARNING("{}", ctx.args[0]);
                               return Err::ok;
                           }}};
 
@@ -61,9 +57,7 @@ Cmd cmd_log_err{Cmd::Cfg{.parent_cmd = &cmd_log,
                          .usage = "<msg:str>",
                          .short_description = "log error message",
                          .fn = [](Cmd::Ctx ctx) {
-                             LOG_ERROR("%.*s",
-                                       static_cast<int>(ctx.args[0].size()),
-                                       ctx.args[0].data());
+                             LOG_ERROR("{}", ctx.args[0]);
                              return Err::ok;
                          }}};
 

@@ -56,6 +56,9 @@
 #include "ln/File.hpp"
 #include "ln/Mutex.hpp"
 
+#include <fmt/format.h>
+#include <fmt/chrono.h>
+
 #include <span>
 #include <cstdarg>
 #include <cstdio>
@@ -116,8 +119,20 @@ public:
 
     const Config &get_config() const { return config; }
 
-    int log(const Module &module, const Level &level, const char *fmt,
-            va_list &arg_list);
+    template <typename... Args>
+    int log(const Module &module, const Level &level, fmt::string_view fmt_str,
+            Args &&...args) {
+        const auto is_interrupt_context = ln::interrupt_context();
+        if (!is_interrupt_context && !this->mutex.lock()) {
+            return 0;
+        }
+        const auto rc =
+            this->_log(module, level, fmt_str, std::forward<Args>(args)...);
+        if (!is_interrupt_context) {
+            this->mutex.unlock();
+        }
+        return rc;
+    }
 
     /**
      * @brief Flush the output buffer to the output stream. Note that buffer
@@ -140,13 +155,41 @@ private:
     void operator=(Logger const &) = delete;
     ~Logger() = default;
 
-    int _log(const Module &module, const Level &level, const char *fmt,
-             va_list &arg_list);
+    template <typename... Args>
+    int _log(const Module &module, const Level &level, fmt::string_view fmt_str,
+             Args &&...args) {
+        int chars_printed = 0;
+        if (this->config.print_header_enabled) {
+            LN_CHECK(this->print_header(module, level), rc, rc < 0,
+                     { chars_printed += rc; }, {});
+        }
+        LN_CHECK(this->print_buf(fmt_str, std::forward<Args>(args)...), rc,
+                 rc < 0, { chars_printed += rc; }, {});
+        LN_CHECK(this->print_buf("{}", this->config.eol), rc, rc < 0,
+                 { chars_printed += rc; }, {});
+        return chars_printed;
+    }
+
     void _flush_buffer();
 
     int print_header(const Module &module, const Level &level);
-    int printf_buf(const char *fmt, ...);
-    int vprintf_buf(const char *fmt, va_list &args);
+
+    template <typename... Args>
+    int print_buf(fmt::string_view fmt_str, Args &&...args) {
+        auto out = this->config.out_buf.data() + this->out_buf_len;
+        auto cap = this->config.out_buf.size() - this->out_buf_len;
+        auto res = fmt::vformat_to_n(out, cap, fmt_str,
+                                     fmt::make_format_args(args...));
+        if (res.size <= 0) {
+            return static_cast<int>(res.size);
+        }
+        this->out_buf_len += static_cast<size_t>(res.size);
+        if (this->config.out_buf.size() - this->out_buf_len <
+            Config::out_buf_flush_threshold) {
+            this->_flush_buffer();
+        }
+        return static_cast<int>(res.size);
+    }
 
     RecursiveMutex mutex;
 
@@ -181,7 +224,21 @@ public:
         this->log(Level::critical, fmt, std::forward<Args>(args)...);
     }
 
-    void log(const Level &level, const char *fmt, ...);
+    template <typename... Args>
+    void log(const Level &level, fmt::string_view fmt_str, Args &&...args) {
+        if constexpr (!Config::enabled_compile_time) {
+            return;
+        }
+        if (!this->logger.config.enabled_run_time) {
+            return;
+        }
+        if (level < (this->log_level == Level::notset
+                         ? this->logger.config.log_level
+                         : this->log_level)) {
+            return;
+        }
+        this->logger.log(*this, level, fmt_str, std::forward<Args>(args)...);
+    }
 
     void set_level(Level log_level);
 

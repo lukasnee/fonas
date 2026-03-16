@@ -50,7 +50,7 @@ public:
     struct Config {
         File istream = File(stdin);
         File ostream = File(stdout);
-        static constexpr std::size_t printf_buffer_size = 256;
+        static constexpr std::size_t fmt_output_buf = 256;
         static constexpr bool regular_response_is_enabled = true;
         bool colored_output = true;
         bool print_result_tags = false;
@@ -71,7 +71,18 @@ public:
     void print(const char &c, std::size_t times_to_repeat = 1);
     int print(const char *str);
     int print(std::string_view sv);
-    int printf(const char *fmt, ...);
+
+    template <typename... Args>
+    int print(fmt::string_view fmt_str, Args &&...args) {
+        std::array<char, Config::fmt_output_buf> tx_buf;
+        auto res = fmt::vformat_to_n(tx_buf.data(), tx_buf.size(), fmt_str,
+                                     fmt::make_format_args(args...));
+        if (res.size <= 0) {
+            return static_cast<int>(res.size);
+        }
+        return this->print(
+            std::string_view(tx_buf.data(), static_cast<size_t>(res.size)));
+    }
 
     using Args = std::span<const std::string_view>;
 

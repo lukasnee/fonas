@@ -10,6 +10,8 @@
 #include "ln/shell/Parser.hpp"
 #include "ln/shell/Arg.hpp"
 
+#include <fmt/core.h>
+
 #include <string_view>
 #include <cstdio>
 #include <optional>
@@ -89,17 +91,16 @@ bool ArgParser::validate_arg_composition(
         }
     }
     if (args.size() < positional_arg_count) {
-        std::fprintf(ostream.c_file(),
-                     "Error: not enough arguments (expected %zu, got %zu)\n",
-                     positional_arg_count, args.size());
+        fmt::print(ostream.c_file(),
+                   "Error: not enough arguments (expected {}, got {})\n",
+                   positional_arg_count, args.size());
         return false;
     }
     for (const auto [i, arg_cfg] : std::views::enumerate(this->arg_cfg)) {
         auto arg = args[i];
         if (arg.empty()) {
-            std::fprintf(ostream.c_file(),
-                         "Error: expected non-empty positional argument %zu\n",
-                         i);
+            fmt::print(ostream.c_file(),
+                       "Error: expected non-empty positional argument {}\n", i);
             return false;
         }
         switch (arg_cfg.type) {

@@ -24,7 +24,7 @@ Err on_off_command_parser(std::function<bool(bool)> on_off_fn,
         if (on_off_fn(true)) {
             return Err::ok;
         }
-        ctx.cli.printf("error: failed to turn on %s\n", ctrl_name);
+        ctx.cli.print("error: failed to turn on {}\n", ctrl_name);
         return Err::fail;
     }
     if (ctx.args[0] == "off"sv || ctx.args[0] == "0"sv ||
@@ -32,7 +32,7 @@ Err on_off_command_parser(std::function<bool(bool)> on_off_fn,
         if (on_off_fn(false)) {
             return Err::ok;
         }
-        ctx.cli.printf("error: failed to turn off %s\n", ctrl_name);
+        ctx.cli.print("error: failed to turn off {}\n", ctrl_name);
         return Err::fail;
     }
     ctx.cli.print("error: unexpected arg\n");

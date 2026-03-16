@@ -11,6 +11,9 @@
 #include "ln/ln.h"
 #include "ln/Clock.hpp"
 
+#include <fmt/core.h>
+#include <fmt/chrono.h>
+
 #include <cstdio>
 
 namespace ln::logger {
@@ -53,52 +56,7 @@ bool Logger::set_config(const Config &config) {
 Module::Module(const std::string_view name, Level log_level, Logger &logger)
     : name(name.data()), log_level(log_level), logger(logger) {}
 
-void Module::log(const Level &level, const char *fmt, ...) {
-    if constexpr (!Config::enabled_compile_time) {
-        return;
-    }
-    if (!this->logger.config.enabled_run_time) {
-        return;
-    }
-    if (level < (this->log_level == Level::notset
-                     ? this->logger.config.log_level
-                     : this->log_level)) {
-        return;
-    }
-    va_list arg_list;
-    va_start(arg_list, fmt);
-    this->logger.log(*this, level, fmt, arg_list);
-    va_end(arg_list);
-}
-
 void Module::set_level(Level log_level) { this->log_level = log_level; }
-
-int Logger::log(const Module &module, const Level &level, const char *fmt,
-                va_list &arg_list) {
-    const auto is_interrupt_context = ln::interrupt_context();
-    if (!is_interrupt_context && !this->mutex.lock()) {
-        return 0;
-    }
-    const auto rc = this->_log(module, level, fmt, arg_list);
-    if (!is_interrupt_context) {
-        this->mutex.unlock();
-    }
-    return rc;
-}
-
-int Logger::_log(const Module &module, const Level &level, const char *fmt,
-                 va_list &arg_list) {
-    int chars_printed = 0;
-    if (this->config.print_header_enabled) {
-        LN_CHECK(this->print_header(module, level), rc, rc < 0,
-                 { chars_printed += rc; }, {});
-    }
-    LN_CHECK(this->vprintf_buf(fmt, arg_list), rc, rc < 0,
-             { chars_printed += rc; }, {});
-    LN_CHECK(this->printf_buf("%s", this->config.eol), rc, rc < 0,
-             { chars_printed += rc; }, {});
-    return chars_printed;
-}
 
 int Logger::print_header(const Module &module, const Level &level) {
 
@@ -124,45 +82,19 @@ int Logger::print_header(const Module &module, const Level &level) {
                                                    {"CRT", ANSI_COLOR_RED}};
     const auto level_clamped = std::min(level, Level::_max);
     const auto level_descr_idx = level_clamped == 0 ? 0 : ((level - 1) / 10);
-    const auto [tm_buf, sec_remainder] = Clock::to_utc_tm_rem(Clock::now());
-    char datetime_buffer[sizeof("YYYY-MM-DD HH:MM:SS")];
-    const auto ms = static_cast<uint32_t>(
-        std::chrono::duration_cast<std::chrono::milliseconds>(sec_remainder)
-            .count());
-    std::strftime(datetime_buffer, sizeof(datetime_buffer), "%Y-%m-%d %H:%M:%S",
-                  &tm_buf);
+    const auto now = Clock::now();
+    const auto now_as_std_system_clock = std::chrono::system_clock::time_point{
+        std::chrono::duration_cast<std::chrono::system_clock::duration>(
+            now.time_since_epoch())};
     const auto current_task_name = ln::get_task_name();
-    return this->printf_buf(
-        "%s.%03lu|%s%s%s|%s%s|%s|", datetime_buffer, ms,
-        (this->config.color ? level_descrs[level_descr_idx].color.data() : ""),
-        level_descrs[level_descr_idx].tag_name.data(),
-        (this->config.color ? ANSI_COLOR_DEFAULT : ""),
+    using namespace std::string_view_literals;
+    return this->print_buf(
+        "{:%Y-%m-%d %H:%M:%S}|{}{}{}|{}{}|{}|", now_as_std_system_clock,
+        (this->config.color ? level_descrs[level_descr_idx].color : ""sv),
+        level_descrs[level_descr_idx].tag_name,
+        (this->config.color ? ANSI_COLOR_DEFAULT : ""sv),
         (ln::interrupt_context() ? "ISR!" : ""),
-        (current_task_name.empty() ? "-" : current_task_name.data()),
-        module.name.data());
-}
-
-int Logger::printf_buf(const char *fmt, ...) {
-    va_list arg_list;
-    va_start(arg_list, fmt);
-    const auto rc = this->vprintf_buf(fmt, arg_list);
-    va_end(arg_list);
-    return rc;
-}
-
-int Logger::vprintf_buf(const char *fmt, va_list &args) {
-    const auto rc =
-        vsnprintf(this->config.out_buf.data() + this->out_buf_len,
-                  this->config.out_buf.size() - this->out_buf_len, fmt, args);
-    if (rc <= 0) {
-        return rc;
-    }
-    this->out_buf_len += static_cast<size_t>(rc);
-    if (this->config.out_buf.size() - this->out_buf_len <
-        Config::out_buf_flush_threshold) {
-        this->_flush_buffer();
-    }
-    return rc;
+        (current_task_name.empty() ? "-" : current_task_name), module.name);
 }
 
 void Logger::_flush_buffer() {

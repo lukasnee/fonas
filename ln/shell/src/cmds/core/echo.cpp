@@ -9,6 +9,8 @@
 
 #include "ln/shell/CLI.hpp"
 
+#include <fmt/ranges.h>
+
 namespace ln::shell {
 
 Cmd echo_cmd{Cmd::Cfg{.cmd_list = Cmd::get_general_cmd_list(),
@@ -19,10 +21,7 @@ Cmd echo_cmd{Cmd::Cfg{.cmd_list = Cmd::get_general_cmd_list(),
                               ctx.cli.print('\n');
                               return Err::ok;
                           }
-                          ctx.cli.printf("%.*s\n",
-                                         ctx.args.back().cend() -
-                                             ctx.args.front().cbegin(),
-                                         ctx.args.front().data());
+                          ctx.cli.print("{}\n", fmt::join(ctx.args, " "));
                           return Err::ok;
                       }}};
 
