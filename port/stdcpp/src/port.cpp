@@ -7,6 +7,7 @@
  * (at your option) any later version.
  */
 
+#include "ln/ln.h"
 #include "ln/MutexI.hpp"
 #include "ln/Clock.hpp"
 
@@ -32,7 +33,7 @@ std::chrono::milliseconds MutexI::max_timeout() {
 void panic(const char *file, int line, const char *message) {
     fmt::print("\n{}:{}: panic{}{}\n", file, line, (message ? ": " : "!"),
                (message ? message : ""));
-    std::abort();
+    ln::reset();
 }
 
 void reset() { std::abort(); }

@@ -21,7 +21,6 @@ FMT_FUNC void assert_fail([[maybe_unused]] const char *file,
                           [[maybe_unused]] int line,
                           [[maybe_unused]] const char *message) {
     ln::panic(file, line, message);
-    std::abort();
 }
 
 FMT_END_NAMESPACE
