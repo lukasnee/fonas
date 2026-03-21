@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <fmt/format.h>
+
 #include <chrono>
 #include <ctime>
 #include <ratio>
@@ -64,3 +66,28 @@ struct Clock {
 };
 
 } // namespace ln
+
+template <>
+struct fmt::formatter<ln::Clock::duration> : fmt::formatter<uint32_t> {
+    auto format(const ln::Clock::duration &d, fmt::format_context &ctx) const {
+        const auto ms_total = d.count();
+        const auto ms = ms_total % 1000U;
+        const auto secs_total = ms_total / 1000U;
+        const auto secs = secs_total % 60;
+        const auto mins_total = secs_total / 60;
+        const auto mins = mins_total % 60;
+        const auto hours_total = mins_total / 60;
+        const auto hours = hours_total % 24;
+        const auto days = hours_total / 24;
+        return fmt::format_to(ctx.out(), "{:03d}:{:02d}:{:02d}:{:02d}.{:03d}",
+                              days, hours, mins, secs, ms);
+    }
+};
+
+template <>
+struct fmt::formatter<ln::Clock::time_point> : fmt::formatter<uint32_t> {
+    auto format(const ln::Clock::time_point &tp,
+                fmt::format_context &ctx) const {
+        return fmt::format_to(ctx.out(), "{}", tp.time_since_epoch());
+    }
+};

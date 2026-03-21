@@ -27,7 +27,7 @@ target_compile_definitions(
          FMT_USE_LONG_DOUBLE=0
          FMT_NO_LOCALTIME=1
          FMT_USE_INT128=0
-         FMT_USE_LOCALE=1 # TODO: investigate necessity
+         FMT_USE_LOCALE=0 # TODO: investigate necessity
          FMT_BUILTIN_TYPES=0
          FMT_OPTIMIZE_SIZE=2
          FMT_USE_EXCEPTIONS=0

@@ -12,7 +12,6 @@
 #include "ln/Clock.hpp"
 
 #include <fmt/core.h>
-#include <fmt/chrono.h>
 
 #include <cstdio>
 
@@ -82,14 +81,10 @@ int Logger::print_header(const Module &module, const Level &level) {
                                                    {"CRT", ANSI_COLOR_RED}};
     const auto level_clamped = std::min(level, Level::_max);
     const auto level_descr_idx = level_clamped == 0 ? 0 : ((level - 1) / 10);
-    const auto now = Clock::now();
-    const auto now_as_std_system_clock = std::chrono::system_clock::time_point{
-        std::chrono::duration_cast<std::chrono::system_clock::duration>(
-            now.time_since_epoch())};
     const auto current_task_name = ln::get_task_name();
     using namespace std::string_view_literals;
     return this->print_buf(
-        "{:%Y-%m-%d %H:%M:%S}|{}{}{}|{}{}|{}|", now_as_std_system_clock,
+        "{}|{}{}{}|{}{}|{}|", Clock::now(),
         (this->config.color ? level_descrs[level_descr_idx].color : ""sv),
         level_descrs[level_descr_idx].tag_name,
         (this->config.color ? ANSI_COLOR_DEFAULT : ""sv),
