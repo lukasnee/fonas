@@ -3,14 +3,14 @@
 #include <cstdint>
 
 namespace ln { namespace build {
-    constexpr const char *name = "@target_name@";
+    const char *name = "@target_name@";
     namespace version {
-        constexpr uint32_t major = @PROJECT_VERSION_MAJOR@;
-        constexpr uint32_t minor = @PROJECT_VERSION_MINOR@;
-        constexpr uint32_t patch = @PROJECT_VERSION_PATCH@;
-        constexpr const char *str = "@PROJECT_VERSION@";
+        const uint32_t major = @PROJECT_VERSION_MAJOR@;
+        const uint32_t minor = @PROJECT_VERSION_MINOR@;
+        const uint32_t patch = @PROJECT_VERSION_PATCH@;
+        const char *str = "@PROJECT_VERSION@";
     } // namespace version
-    constexpr const char *git_hash = "@git_hash@";
-    constexpr const char *date = __DATE__;
-    constexpr const char *time = __TIME__;
+    const char *git_hash = "@git_hash@";
+    const char *date = __DATE__;
+    const char *time = __TIME__;
 }} // namespace ln::build
