@@ -1,5 +1,7 @@
 include_guard()
 
+include(${CMAKE_CURRENT_LIST_DIR}/bloaty.cmake)
+
 function(ln_generate_firmware_output_files fw_target)
   target_link_options(
     ${fw_target} PUBLIC -Wl,-Map=${CMAKE_CURRENT_BINARY_DIR}/${fw_target}.map
@@ -26,6 +28,22 @@ function(ln_generate_firmware_output_files fw_target)
     COMMAND echo "${dir}/${fw_target}.size-sort.nm"
     COMMAND ${CMAKE_NM} -lnC ${fw_target} > ${fw_target}.symbols
     COMMAND echo "${dir}/${fw_target}.symbols")
+
+  if(LN_BLOATY)
+    add_custom_command(
+      TARGET ${fw_target}
+      POST_BUILD
+      COMMAND
+        ${BLOATY_EXECUTABLE} -d compileunits -n 0 -s vm
+        ${CMAKE_CURRENT_BINARY_DIR}/${fw_target} >
+        ${CMAKE_CURRENT_BINARY_DIR}/${fw_target}.bloaty.compileunits.txt
+      COMMAND echo "${dir}/${fw_target}.bloaty.compileunits.txt"
+      COMMAND
+        ${BLOATY_EXECUTABLE} -d compileunits,symbols -n 0 -s vm
+        ${CMAKE_CURRENT_BINARY_DIR}/${fw_target} >
+        ${CMAKE_CURRENT_BINARY_DIR}/${fw_target}.bloaty.compileunits.symbols.txt
+      COMMAND echo "${dir}/${fw_target}.bloaty.compileunits.symbols.txt")
+  endif()
 endfunction()
 
 function(ln_add_firmware target_name linker_script openocd_cfg)
@@ -43,6 +61,10 @@ function(ln_add_firmware target_name linker_script openocd_cfg)
   configure_file(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/build.hpp.in
                  ${CMAKE_BINARY_DIR}/include/ln/build.hpp @ONLY)
   target_include_directories(fibsys INTERFACE ${CMAKE_BINARY_DIR}/include)
+
+  if(LN_BLOATY)
+    ln_bloaty_compare_with_previous_build(${target_name})
+  endif()
 
   ln_generate_firmware_output_files(${target_name})
 
