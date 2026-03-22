@@ -39,7 +39,7 @@ set(CMAKE_C_COMPILER_WORKS 1)
 set(CMAKE_CXX_COMPILER_WORKS 1)
 
 set(c_cxx_linker_flags "") # -flto
-set(c_cxx_asm_flags "-fstack-usage -fdata-sections -ffunction-sections -g")
+set(c_cxx_asm_flags "-fstack-usage -fdata-sections -ffunction-sections")
 
 set(CMAKE_C_FLAGS "${c_cxx_asm_flags} ${c_cxx_linker_flags}")
 set(CMAKE_CXX_FLAGS
@@ -47,7 +47,7 @@ set(CMAKE_CXX_FLAGS
 )
 set(CMAKE_ASM_FLAGS "-x assembler-with-cpp ${c_cxx_asm_flags}")
 set(CMAKE_EXE_LINKER_FLAGS
-    "${c_cxx_linker_flags} --specs=nano.specs --specs=nosys.specs -static -Wl,--gc-sections -Wl,--print-memory-usage -u _printf_float -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group"
+    "${c_cxx_linker_flags} --specs=nano.specs --specs=nosys.specs -static -Wl,--gc-sections -Wl,--print-memory-usage -u _printf_float -Wl,--start-group -lc -lm -lstdc++ -Wl,--end-group"
     # -Wl,--verbose -Wl,--trace -u _scanf_float
 )
 
