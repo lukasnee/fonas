@@ -61,7 +61,7 @@ namespace ln {
  *
  * @note Port-specific implementation.
  */
-void reset();
+[[noreturn]] void reset();
 
 /**
  * @brief Get the system uptime in milliseconds.
