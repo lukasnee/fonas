@@ -82,4 +82,11 @@ function(ln_add_firmware target_name linker_script openocd_cfg)
     COMMAND openocd -f ${openocd_cfg} -c "init;reset;shutdown"
     VERBATIM
     COMMENT "Resetting target...")
+
+  add_custom_target(
+    puncover_${target_name}
+    COMMAND puncover --elf ${CMAKE_CURRENT_BINARY_DIR}/${fw_target} --src_root
+            ${CMAKE_SOURCE_DIR} --build_dir ${CMAKE_BINARY_DIR}
+    DEPENDS ${target_name}
+    COMMENT "Running puncover for ${target_name}...")
 endfunction()
