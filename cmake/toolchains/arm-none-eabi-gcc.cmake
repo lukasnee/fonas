@@ -38,17 +38,38 @@ set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 set(CMAKE_C_COMPILER_WORKS 1)
 set(CMAKE_CXX_COMPILER_WORKS 1)
 
-set(c_cxx_linker_flags "") # -flto
-set(c_cxx_asm_flags "-fstack-usage -fdata-sections -ffunction-sections")
+set(cmn_flags_c_cxx_linker) # -flto
+set(cmn_flags_c_cxx_asm -fstack-usage -fdata-sections -ffunction-sections)
 
-set(CMAKE_C_FLAGS "${c_cxx_asm_flags} ${c_cxx_linker_flags}")
-set(CMAKE_CXX_FLAGS
-    "${c_cxx_asm_flags} ${c_cxx_linker_flags} -fno-rtti -fno-exceptions -fno-threadsafe-statics"
-)
-set(CMAKE_ASM_FLAGS "-x assembler-with-cpp ${c_cxx_asm_flags}")
-set(CMAKE_EXE_LINKER_FLAGS
-    "${c_cxx_linker_flags} --specs=nano.specs --specs=nosys.specs -static -Wl,--gc-sections -Wl,--print-memory-usage -u _printf_float -Wl,--start-group -lc -lm -lstdc++ -Wl,--end-group"
-    # -Wl,--verbose -Wl,--trace -u _scanf_float
+string(JOIN " " CMAKE_C_FLAGS ${cmn_flags_c_cxx_asm} ${cmn_flags_c_cxx_linker})
+string(
+  JOIN
+  " "
+  CMAKE_CXX_FLAGS
+  ${cmn_flags_c_cxx_asm}
+  ${cmn_flags_c_cxx_linker}
+  -fno-rtti
+  -fno-exceptions
+  -fno-threadsafe-statics)
+string(JOIN " " CMAKE_ASM_FLAGS ${cmn_flags_c_cxx_asm} -x assembler-with-cpp)
+string(
+  JOIN
+  " "
+  CMAKE_EXE_LINKER_FLAGS
+  ${cmn_flags_c_cxx_linker}
+  --specs=nano.specs
+  --specs=nosys.specs
+  -static
+  -Wl,--gc-sections
+  -Wl,--print-memory-usage
+  -u
+  _printf_float
+  -Wl,--start-group
+  -lc
+  -lm
+  -lstdc++
+  -Wl,--end-group
+  # -Wl,--verbose -Wl,--trace -u _scanf_float
 )
 
 # https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html
