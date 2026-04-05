@@ -122,7 +122,7 @@ static void hardfault_handler(void *exception_stack_frame) {
     };
     const FType ftype = exc_return & (1 << 4) ? FType::basic : FType::extended;
 
-    fmt::print("\nsystem hardfault!\n");
+    fmt::print("\n# system hardfault!\n");
     fmt::print("uptime: {}\n", ln::get_uptime_ms());
     const uint32_t sp =
         reinterpret_cast<uint32_t>(frame) +
@@ -225,8 +225,9 @@ static void hardfault_handler(void *exception_stack_frame) {
 [[noreturn]] void panic(const char *file, int line, const char *message) {
     const auto sp = get_sp();
     const auto ipsr = get_ipsr();
-    fmt::print("\n{}:{}: panic{}{}\n", file, line, (message ? ": " : "!"),
-               (message ? message : ""));
+    fmt::print("\n# panic!\n");
+    fmt::print("message: {}\n", (message ? message : "null"));
+    fmt::print("location: {}:{}\n", file, line);
     fmt::print("uptime: {} ms\n", get_uptime_ms().count());
     fmt::print("SP: {:08X}\n", sp);
     fmt::print("IPSR: {} ({} mode)\n", ipsr,
