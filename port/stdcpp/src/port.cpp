@@ -16,6 +16,7 @@
 #include <chrono>
 #include <cstdlib>
 #include <cstdio>
+#include <thread>
 
 namespace ln {
 
@@ -41,6 +42,10 @@ void reset() { std::abort(); }
 std::chrono::milliseconds get_uptime_ms() {
     return std::chrono::duration_cast<std::chrono::milliseconds>(
         Clock::now().time_since_epoch());
+}
+
+void sleep(std::chrono::milliseconds duration) {
+    std::this_thread::sleep_for(duration);
 }
 
 bool interrupt_context() { return false; }

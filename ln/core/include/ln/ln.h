@@ -70,6 +70,12 @@ namespace ln {
  */
 std::chrono::milliseconds get_uptime_ms();
 
+template <typename Rep, typename Period>
+void sleep(std::chrono::duration<Rep, Period> duration) {
+    void sleep(std::chrono::milliseconds duration);
+    sleep(std::chrono::duration_cast<std::chrono::milliseconds>(duration));
+}
+
 /**
  * @brief Check if the current context is an interrupt context.
  *

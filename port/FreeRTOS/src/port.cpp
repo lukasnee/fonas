@@ -13,6 +13,7 @@
 #include "ln/MutexI.hpp"
 
 #include "FreeRTOS/Kernel.hpp"
+#include "FreeRTOS/Task.hpp"
 
 namespace ln {
 
@@ -47,6 +48,17 @@ std::chrono::milliseconds MutexI::max_timeout() {
 std::chrono::milliseconds get_uptime_ms() {
     return duration_cast<std::chrono::milliseconds>(
         Clock::now().time_since_epoch());
+}
+
+void sleep(std::chrono::milliseconds duration) {
+    if (duration >= Clock::duration::max()) {
+        vTaskDelay(portMAX_DELAY);
+    }
+    else {
+        vTaskDelay(
+            static_cast<TickType_t>(duration.count() * configTICK_RATE_HZ /
+                                    static_cast<TickType_t>(std::milli::den)));
+    }
 }
 
 bool interrupt_context() { return xPortIsInsideInterrupt(); }
