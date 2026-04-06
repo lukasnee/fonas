@@ -236,6 +236,7 @@ static void hardfault_handler(void *exception_stack_frame) {
     const size_t words_to_dump = 64;
     print_words_in_hex("  ", sp, words_to_dump, 4);
     reset();
+    ln::sleep(std::chrono::seconds(1));
     std::unreachable();
 }
 
