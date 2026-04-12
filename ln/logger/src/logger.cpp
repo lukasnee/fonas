@@ -84,9 +84,10 @@ int Logger::print_header(const Module &module, const Level &level) {
     const auto current_task_name = ln::get_task_name();
     using namespace std::string_view_literals;
     return this->print_buf(
-        "{}|{}{}|{}|{}{}{}|", Clock::now(),
-        (ln::interrupt_context() ? "ISR!" : ""),
-        (current_task_name.empty() ? "<unknown_task>" : current_task_name),
+        "{}|{}|{}|{}{}{}|", Clock::now(),
+        (ln::interrupt_context()
+             ? "ISR!"
+             : (!current_task_name.empty() ? current_task_name : "?")),
         module.name,
         (this->config.color ? level_descrs[level_descr_idx].color : ""sv),
         level_descrs[level_descr_idx].tag_name,
