@@ -3,6 +3,8 @@
 #include <catch2/catch_test_macros.hpp>
 #include <ranges>
 
+// NOLINTBEGIN(readability-container-size-empty,bugprone-unchecked-optional-access)
+
 TEST_CASE("ln::RingBufferView basic push/pop", "[ln::RingBufferView]") {
     std::array<int, 4> storage{};
     ln::RingBufferView<int> rb(storage);
@@ -416,3 +418,5 @@ TEST_CASE("ln::RingBuffer range reverse iteration",
         ++idx;
     }
 }
+
+// NOLINTEND(readability-container-size-empty,bugprone-unchecked-optional-access)

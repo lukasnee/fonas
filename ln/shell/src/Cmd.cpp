@@ -47,6 +47,7 @@ static bool matches_any_token(std::string_view str_token,
         const std::size_t this_token_length =
             str_char_it + (it_at_last_char ? 1 : 0) - str_this_token;
         if (str_token.size() == this_token_length &&
+            // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
             0 == std::strncmp(str_token.data(), str_this_token,
                               this_token_length)) {
             return true;

@@ -3,6 +3,8 @@ Checks:
   -*,
   clang-diagnostic-*,
   clang-analyzer-*,
+  -clang-analyzer-optin.cplusplus.UninitializedObject,
+  -clang-analyzer-optin.core.EnumCastOutOfRange,
   bugprone-*,
   -bugprone-easily-swappable-parameters,
   -bugprone-macro-parentheses,
@@ -37,6 +39,7 @@ Checks:
   # -cppcoreguidelines-avoid-non-const-global-variables,
   # -cppcoreguidelines-pro-bounds-pointer-arithmetic,
 HeaderFilterRegex: ""
+ExcludeHeaderFilterRegex: "^.*/(extern|build)/.*"
 WarningsAsErrors: "*,-bugprone-unchecked-optional-access"
 HeaderFileExtensions:
   - ""

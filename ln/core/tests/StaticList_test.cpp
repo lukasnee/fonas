@@ -218,6 +218,6 @@ TEST_CASE("ln::StaticList works with std::ranges", "[ln::StaticList]") {
                                 return item.value % 2 == 1;
                             }) | std::views::enumerate) {
         REQUIRE(item.value % 2 == 1);
-        REQUIRE(item.value == static_cast<int>(idx) * 2 + 1);
+        REQUIRE(item.value == ((static_cast<int>(idx) * 2) + 1));
     }
 }

@@ -7,7 +7,14 @@ to work nicely together for FreeRTOS embedded systems development.
 
 ```shell
 sudo apt update && sudo apt upgrade -y
-sudo apt install clang-format cmake
+sudo apt install cmake sudo apt install clang-20 clangd-20 clang-tidy-20 clang-format-20 clang-tools-20
+sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-20 100
+sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-20 100
+sudo update-alternatives --install /usr/bin/clangd clangd /usr/bin/clangd-20 100
+sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-20 100
+sudo update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-20 100
+sudo update-alternatives --install /usr/bin/clang-apply-replacements clang-apply-replacements /usr/bin/clang-apply-replacements-20 100
+sudo update-alternatives --install /usr/bin/run-clang-tidy run-clang-tidy /usr/bin/run-clang-tidy-20 100
 ARM_TOOLCHAIN_VERSION=$(curl -s https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads | grep -Po '<h4>Version \K.+(?=</h4>)')
 curl -Lo gcc-arm-none-eabi.tar.xz "https://developer.arm.com/-/media/Files/downloads/gnu/${ARM_TOOLCHAIN_VERSION}/binrel/arm-gnu-toolchain-${ARM_TOOLCHAIN_VERSION}-x86_64-arm-none-eabi.tar.xz"
 sudo mkdir /opt/gcc-arm-none-eabi

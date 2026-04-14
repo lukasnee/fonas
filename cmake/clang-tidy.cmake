@@ -6,11 +6,14 @@ else()
   message(WARNING "clang-tidy not found!")
 endif()
 
-if(CLANG_TIDY_EXE AND CMAKE_CROSSCOMPILING)
+if(NOT CLANG_TIDY_EXE)
+  return()
+endif()
+
+set(CMAKE_CXX_CLANG_TIDY ${CLANG_TIDY_EXE} -p ${CMAKE_BINARY_DIR})
+if(CMAKE_CROSSCOMPILING)
   # When cross-compiling, clang-tidy needs manual help with the target triple
   # and the include paths to find the correct standard library headers.
-  set(CMAKE_CXX_CLANG_TIDY ${CLANG_TIDY_EXE} -p ${CMAKE_BINARY_DIR})
-  list(APPEND CMAKE_CXX_CLANG_TIDY --header-filter=${PROJECT_SOURCE_DIR}/ln/.*)
   if(CMAKE_CXX_CLANG_TIDY AND CMAKE_CXX_COMPILER MATCHES .*arm-none-eabi.*)
     list(APPEND CMAKE_CXX_CLANG_TIDY --extra-arg=--target=arm-none-eabi)
     set(implicit_includes ${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES}
