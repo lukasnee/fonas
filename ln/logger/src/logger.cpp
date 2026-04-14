@@ -53,7 +53,7 @@ bool Logger::set_config(const Config &config) {
 }
 
 Module::Module(const std::string_view name, Level log_level, Logger &logger)
-    : name(name.data()), log_level(log_level), logger(logger) {}
+    : name(name), log_level(log_level), logger(logger) {}
 
 void Module::set_level(Level log_level) { this->log_level = log_level; }
 
@@ -81,14 +81,19 @@ int Logger::print_header(const Module &module, const Level &level) {
                                                    {"CRT", ANSI_COLOR_RED}};
     const auto level_clamped = std::min(level, Level::_max);
     const auto level_descr_idx = level_clamped == 0 ? 0 : ((level - 1) / 10);
-    const auto current_task_name = ln::get_task_name();
+    std::string_view task_name = "?";
+    if (ln::interrupt_context()) {
+        task_name = "ISR!";
+    }
+    else {
+        const auto _task_name = ln::get_task_name();
+        if (!_task_name.empty()) {
+            task_name = _task_name;
+        }
+    }
     using namespace std::string_view_literals;
     return this->print_buf(
-        "{}|{}|{}|{}{}{}|", Clock::now(),
-        (ln::interrupt_context()
-             ? "ISR!"
-             : (!current_task_name.empty() ? current_task_name : "?")),
-        module.name,
+        "{}|{}|{}|{}{}{}|", Clock::now(), task_name, module.name,
         (this->config.color ? level_descrs[level_descr_idx].color : ""sv),
         level_descrs[level_descr_idx].tag_name,
         (this->config.color ? ANSI_COLOR_DEFAULT : ""sv));

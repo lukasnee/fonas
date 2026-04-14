@@ -245,8 +245,9 @@ char CLI::getc_or_handle_escape_sequences() {
         10; // enough to hold any escape sequence we care about
     std::array<char, buf_capacity> buf;
     std::size_t buf_size = 0;
-    auto getc = [&]() -> char {
-        const auto c = std::fgetc(this->config.istream.c_file());
+    auto getc = [&]() {
+        const auto c =
+            static_cast<char>(std::fgetc(this->config.istream.c_file()));
         if (buf_size < buf.size()) {
             buf[buf_size++] = c == '\e' ? 'e' : c;
         }
@@ -258,13 +259,16 @@ char CLI::getc_or_handle_escape_sequences() {
     };
     while (true) {
         char c = getc();
-        // NOLINTNEXTLINE(readability-magic-numbers)
-        if (c == 0x0C) { // Ctrl + L
+
+        enum AsciiControlChar : char {
+            ctrl_l = 0x0C,
+            ctrl_z = 0x1A
+        };
+        if (c == AsciiControlChar::ctrl_l) {
             this->clear_screen();
             continue;
         }
-        // NOLINTNEXTLINE(readability-magic-numbers)
-        if (c == 0x1A) {
+        if (c == AsciiControlChar::ctrl_z) {
             if (this->mode == Mode::command) {
                 if (!this->config.interpreter) {
                     this->print("No interpreter configured.\n");

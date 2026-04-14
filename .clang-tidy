@@ -14,6 +14,8 @@ Checks:
   -performance-no-int-to-ptr,
   portability-*,
   readability-*,
+  -readability-magic-numbers,
+  -readability-isolate-declaration,
   -readability-convert-member-functions-to-static,
   -readability-identifier-length,
   -readability-implicit-bool-conversion,
