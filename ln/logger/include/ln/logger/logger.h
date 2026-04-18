@@ -11,29 +11,40 @@
 
 #ifdef LN_LOGGER
 
-#define LOG_SCOPE(_logger_module)                                              \
-    ln::logger::Module *__logger_module_curr_scope [[maybe_unused]] =          \
-        &_logger_module
+// Can be used together with LOG_SCOPE() to use already defined module from
+// another source file. LOG_EXTERN() must be used in global scope, even though
+// while LOG_SCOPE() is scope-based. If external module is in a different
+// namespace, wrap the LOG_EXTERN(<name>) call in `namespace <some_namespace>
+// {}` and use qualified name in LOG_SCOPE(<some_namespace>::<name>).
+#define LOG_EXTERN(_name) extern ::ln::logger::Module _name##_logger_module
 
-#define LOG_MODULE_DEFINITION(_obj_name, _name, _level)                        \
-    ln::logger::Module _obj_name { #_name, _level, ln::logger::get_instance() }
+#define LOG_SCOPE(_name) _LOG_SCOPE(::_name)
+
+#define _LOG_SCOPE(_name)                                                      \
+    ::ln::logger::Module *__logger_module_curr_scope [[maybe_unused]] =        \
+        &_name##_logger_module
+
+#define LOG_MODULE_DEFINITION(_name, _level)                                   \
+    ::ln::logger::Module _name##_logger_module {                               \
+        #_name, _level, ::ln::logger::get_instance()                           \
+    }
 
 #define LOG_MODULE(_name, _level)                                              \
-    static LOG_MODULE_DEFINITION(logger_module, _name, _level);                \
-    static LOG_SCOPE(logger_module)
+    LOG_MODULE_DEFINITION(_name, _level);                                      \
+    static _LOG_SCOPE(_name)
 
 #define LOG_MODULE_CLASS_MEMBER(_name, _level)                                 \
-    LOG_MODULE_DEFINITION(logger_module, _name, _level);                       \
-    LOG_SCOPE(logger_module)
+    LOG_MODULE_DEFINITION(_name, _level);                                      \
+    _LOG_SCOPE(_name)
 
 #define LOG(_level, ...) __logger_module_curr_scope->log(_level, __VA_ARGS__);
-#define LOG_DEBUG(...) LOG(ln::logger::Level::debug, __VA_ARGS__)
-#define LOG_INFO(...) LOG(ln::logger::Level::info, __VA_ARGS__)
-#define LOG_WARNING(...) LOG(ln::logger::Level::warning, __VA_ARGS__)
-#define LOG_ERROR(...) LOG(ln::logger::Level::error, __VA_ARGS__)
-#define LOG_CRITICAL(...) LOG(ln::logger::Level::critical, __VA_ARGS__)
+#define LOG_DEBUG(...) LOG(::ln::logger::Level::debug, __VA_ARGS__)
+#define LOG_INFO(...) LOG(::ln::logger::Level::info, __VA_ARGS__)
+#define LOG_WARNING(...) LOG(::ln::logger::Level::warning, __VA_ARGS__)
+#define LOG_ERROR(...) LOG(::ln::logger::Level::error, __VA_ARGS__)
+#define LOG_CRITICAL(...) LOG(::ln::logger::Level::critical, __VA_ARGS__)
 
-#define LOG_FLUSH() ln::logger::get_instance().flush_buffer()
+#define LOG_FLUSH() ::ln::logger::get_instance().flush_buffer()
 
 #else
 
