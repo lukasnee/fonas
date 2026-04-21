@@ -51,6 +51,10 @@ endif()
 
 include(cmake/clang-tidy.cmake)
 
+if(PROJECT_IS_TOP_LEVEL)
+  ln_enable_clang_tidy()
+endif()
+
 include(extern/fmt/fmt.cmake)
 if(LN_FREERTOS)
   add_subdirectory(extern/FreeRTOS-Cpp)

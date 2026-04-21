@@ -69,7 +69,7 @@ Cmd cmd_log_err{Cmd::Cfg{.parent_cmd = &cmd_log,
             .usage = generic::cmds::on_off_command_usage,                      \
             .fn = [](Cmd::Ctx ctx) {                                           \
                 auto config = ln::logger::Logger::get_instance().get_config(); \
-                if (ctx.args.size() == 0) {                                    \
+                if (ctx.args.empty()) {                                        \
                     ctx.cli.print(config.config_field ? "1" : "0");            \
                     ctx.cli.print('\n');                                       \
                     return Err::ok;                                            \

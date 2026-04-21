@@ -1,37 +1,44 @@
-find_program(CLANG_TIDY_EXE "clang-tidy")
+macro(ln_enable_clang_tidy)
 
-if(CLANG_TIDY_EXE)
-  message(STATUS "clang-tidy found: ${CLANG_TIDY_EXE}")
-else()
-  message(WARNING "clang-tidy not found!")
-endif()
-
-if(NOT CLANG_TIDY_EXE)
-  return()
-endif()
-
-set(CMAKE_CXX_CLANG_TIDY ${CLANG_TIDY_EXE} -p ${CMAKE_BINARY_DIR})
-if(CMAKE_CROSSCOMPILING)
-  # When cross-compiling, clang-tidy needs manual help with the target triple
-  # and the include paths to find the correct standard library headers.
-  if(CMAKE_CXX_CLANG_TIDY AND CMAKE_CXX_COMPILER MATCHES .*arm-none-eabi.*)
-    list(APPEND CMAKE_CXX_CLANG_TIDY --extra-arg=--target=arm-none-eabi)
-    set(implicit_includes ${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES}
-                          ${CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES})
-    list(REMOVE_DUPLICATES implicit_includes)
-    foreach(include ${implicit_includes})
-      # Skip GCC's builtin headers because clang does not support the same
-      # builtins and intrinsics. Clang provides its own so-called resource
-      # headers for that purpose, which come bundled with the compiler not the
-      # standard library.
-      if(${include} MATCHES .*lib/gcc.*)
-        continue()
-      endif()
-      list(APPEND CMAKE_CXX_CLANG_TIDY "--extra-arg=-isystem${include}")
-    endforeach()
+  find_program(CLANG_TIDY_EXE "clang-tidy")
+  if(CLANG_TIDY_EXE)
+    message(STATUS "clang-tidy found: ${CLANG_TIDY_EXE}")
+  else()
+    message(WARNING "clang-tidy not found!")
   endif()
-  message(
-    VERBOSE
-    "You may use the following configurations for .pre-commit-config.yaml clang-tidy hook args: ${CMAKE_CXX_CLANG_TIDY}"
-  )
-endif()
+
+  if(NOT CLANG_TIDY_EXE)
+    message(
+      FATAL_ERROR
+        "clang-tidy is required for static analysis. Please install clang-tidy and try again."
+    )
+  endif()
+
+  set(CMAKE_CXX_CLANG_TIDY ${CLANG_TIDY_EXE} -p ${CMAKE_BINARY_DIR}
+                           --extra-arg=-Wno-ignored-optimization-argument)
+  if(CMAKE_CROSSCOMPILING)
+    # When cross-compiling, clang-tidy needs manual help with the target triple
+    # and the include paths to find the correct standard library headers.
+    if(CMAKE_CXX_CLANG_TIDY AND CMAKE_CXX_COMPILER MATCHES .*arm-none-eabi.*)
+      list(APPEND CMAKE_CXX_CLANG_TIDY --extra-arg=--target=arm-none-eabi)
+      set(implicit_includes ${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES}
+                            ${CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES})
+      list(REMOVE_DUPLICATES implicit_includes)
+      foreach(include ${implicit_includes})
+        # Skip GCC's builtin headers because clang does not support the same
+        # builtins and intrinsics. Clang provides its own so-called resource
+        # headers for that purpose, which come bundled with the compiler not the
+        # standard library.
+        if(${include} MATCHES .*lib/gcc.*)
+          continue()
+        endif()
+        list(APPEND CMAKE_CXX_CLANG_TIDY "--extra-arg=-isystem${include}")
+      endforeach()
+    endif()
+    message(
+      VERBOSE
+      "You may use the following configurations for .pre-commit-config.yaml clang-tidy hook args: ${CMAKE_CXX_CLANG_TIDY}"
+    )
+  endif()
+
+endmacro()
