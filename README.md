@@ -25,6 +25,11 @@ arm-none-eabi-gcc --version
 arm-none-eabi-g++ --version
 arm-none-eabi-gdb --version
 rm -rf gcc-arm-none-eabi.tar.xz
+
+# in this project root:
+pre-commit install
+cmake --workflow tests
+cmake --workflow arm-none-eabi-gcc-dbg
 ```
 
 ## Format
