@@ -31,5 +31,8 @@ for file in (find $search_paths -type f \( -name "*.h" -o -name "*.hpp" -o -name
     end
     cat "$file" >> "$temp_file"
     mv "$temp_file" "$file"
-    clang-format -i "$file"
+    if string match -q "*$license_header*" (cat "$file" | string collect)
+        echo "clang-format -i $file"
+        clang-format -i "$file"
+    end
 end
