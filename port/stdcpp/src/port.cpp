@@ -25,11 +25,9 @@ std::chrono::milliseconds MutexI::max_timeout() {
     return std::chrono::milliseconds::max();
 }
 
-void panic(const char *file, int line, const char *message) {
+void panic_port(const char *file, int line, const char *message) {
     fmt::print("\n{}:{}: panic{}{}\n", file, line, (message ? ": " : "!"),
                (message ? message : ""));
-    ln::sleep(std::chrono::seconds(1));
-    ln::reset();
 }
 
 void reset() { std::abort(); }

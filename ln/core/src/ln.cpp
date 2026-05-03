@@ -3,7 +3,29 @@
 
 #include "ln/ln.h"
 
+#ifdef LN_LOGGER
+#include "ln/logger/logger.h"
+#endif
+
+#include <utility>
+
+namespace ln {
+
+void panic_port(const char *file, int line, const char *message);
+
+[[noreturn]] void panic(const char *file, int line, const char *message) {
+#ifdef LN_LOGGER
+    ln::logger::get_instance().flush_buffer();
+#endif
+    ln::panic_port(file, line, message);
+    ln::sleep(std::chrono::seconds(5));
+    ln::reset();
+    std::unreachable();
+}
+} // namespace ln
+
 extern "C" void ln_panic(const char *file, int line, const char *message) {
     ln::panic(file, line, message);
 }
+
 extern "C" void ln_reset() { ln::reset(); }

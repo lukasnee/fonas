@@ -14,7 +14,6 @@ extern "C"
 #include <fmt/chrono.h>
 
 #include <cstdint>
-#include <inttypes.h>
 
 namespace ln {
 
@@ -216,7 +215,7 @@ static void hardfault_handler(void *exception_stack_frame) {
     reset();
 }
 
-[[noreturn]] void panic(const char *file, int line, const char *message) {
+void panic_port(const char *file, int line, const char *message) {
     const auto sp = get_sp();
     const auto ipsr = get_ipsr();
     fmt::print("\n# panic!\n");
@@ -229,9 +228,6 @@ static void hardfault_handler(void *exception_stack_frame) {
     fmt::print("stack dump:\n");
     const size_t words_to_dump = 64;
     print_words_in_hex("  ", sp, words_to_dump, 4);
-    reset();
-    ln::sleep(std::chrono::seconds(1));
-    std::unreachable();
 }
 
 void reset() {
