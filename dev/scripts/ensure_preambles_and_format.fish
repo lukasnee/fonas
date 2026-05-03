@@ -16,6 +16,9 @@ if test (count $search_paths) -eq 0
 end
 
 for file in (find $search_paths -type f \( -name "*.h" -o -name "*.hpp" -o -name "*.c" -o -name "*.cpp" \) ! -name "FreeRTOSConfig.h")
+    if not git ls-files --error-unmatch "$file" &>/dev/null
+        continue
+    end
     set temp_file (mktemp)
     if not grep -qE "[cC]opyright\s+\([cC]\)" "$file"
     echo "+preable $file"
