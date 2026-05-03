@@ -10,7 +10,15 @@ set license_header "// Copyright (c) $current_year Lukas Neverauskis <lukas.neve
 set pragma_once_header "#pragma once
  "
 
-set search_paths $argv
+set add_pragma_once false
+set search_paths
+for arg in $argv
+    if test "$arg" = --pragma-once
+        set add_pragma_once true
+    else
+        set search_paths $search_paths $arg
+    end
+end
 if test (count $search_paths) -eq 0
     set search_paths ln/ port/ cmake/
 end
@@ -25,7 +33,7 @@ for file in (find $search_paths -type f \( -name "*.h" -o -name "*.hpp" -o -name
         echo -e "$license_header" > "$temp_file"
     end
     if string match -qr '\.(h|hpp)$' -- "$file"
-        if not grep -q "#pragma once" "$file"
+        if test "$add_pragma_once" = true; and not grep -q "#pragma once" "$file"
             echo -e "$pragma_once_header" >> "$temp_file"
         end
     end
