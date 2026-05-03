@@ -1,3 +1,6 @@
+// Copyright (c)  2026 Lukas Neverauskis <lukas.neverauskis@gmail.com>
+// SPDX-License-Identifier: GPL-2.0-only
+
 #include "ln/StaticList.hpp"
 
 #include <catch2/catch_test_macros.hpp>
