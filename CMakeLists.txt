@@ -57,7 +57,7 @@ endif()
 
 include(extern/fmt/fmt.cmake)
 if(LN_FREERTOS)
-  add_subdirectory(extern/FreeRTOS-Cpp)
+  add_subdirectory(extern/freertos-mcpp)
 endif()
 if(LN_LITTLEFS)
   include(cmake/extern/littlefs.cmake)

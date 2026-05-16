@@ -7,3 +7,6 @@
 [submodule "extern/lua"]
 	path = extern/lua
 	url = https://github.com/lukasnee/lua.git
+[submodule "extern/freertos-mcpp"]
+	path = extern/freertos-mcpp
+	url = https://github.com/lukasnee/freertos-mcpp.git
