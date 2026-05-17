@@ -235,21 +235,21 @@ Err CLI::execute(std::string_view input) {
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 char CLI::getc_or_handle_escape_sequences() {
-    const size_t buf_capacity =
+    const size_t warn_buf_capacity =
         10; // enough to hold any escape sequence we care about
-    std::array<char, buf_capacity> buf;
+    std::array<char, warn_buf_capacity> warn_buf;
     std::size_t buf_size = 0;
     auto getc = [&]() {
         const auto c =
             static_cast<char>(std::fgetc(this->config.istream.c_file()));
-        if (buf_size < buf.size()) {
-            buf[buf_size++] = c == '\e' ? 'e' : c;
+        if (buf_size < warn_buf.size()) {
+            warn_buf[buf_size++] = c == '\e' ? 'e' : c;
         }
         return c;
     };
     auto handle_unknown = [&]() {
         LOG_WARNING("Unknown escape sequence: {}",
-                    std::string_view(buf.data(), buf_size));
+                    std::string_view(warn_buf.data(), buf_size));
     };
     while (true) {
         char c = getc();
