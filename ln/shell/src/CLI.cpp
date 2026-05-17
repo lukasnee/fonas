@@ -7,6 +7,7 @@
 
 #include <cstdio>
 #include <cstring>
+#include <ranges>
 #include <type_traits>
 
 namespace ln::shell {
@@ -209,28 +210,35 @@ Err CLI::execute(std::string_view input) {
     if (input.empty()) {
         return Err::ok;
     }
-    std::array<std::string_view, ArgParser::Cfg::args_buf_size_default>
-        args_buf;
-    auto opt_args = ArgParser::tokenize(input, args_buf);
-    if (!opt_args) {
-        if (this->config.colored_output) {
-            this->print(ANSI_COLOR_RED);
+    for (auto cmd_range : input | std::views::split(std::string_view{"\\n"})) {
+        std::string_view cmd{cmd_range.begin(), cmd_range.end()};
+        std::array<std::string_view, ArgParser::Cfg::args_buf_size_default>
+            args_buf;
+        auto opt_args = ArgParser::tokenize(cmd, args_buf);
+        if (!opt_args) {
+            if (this->config.colored_output) {
+                this->print(ANSI_COLOR_RED);
+            }
+            this->print("error parsing arguments\n");
+            if (this->config.colored_output) {
+                this->print(ANSI_COLOR_RESET);
+            }
+            return Err::badArg;
         }
-        this->print("error parsing arguments\n");
-        if (this->config.colored_output) {
-            this->print(ANSI_COLOR_RESET);
+        const auto args = *opt_args;
+        if (args.empty()) {
+            return Err::ok;
         }
-        return Err::badArg;
+        const auto [cmd_ptr, cmd_args] = this->find_cmd(args);
+        if (!cmd_ptr) {
+            return Err::unknownCmd;
+        }
+        auto err = this->execute(*cmd_ptr, cmd_args);
+        if (err != Err::ok) {
+            return err;
+        }
     }
-    const auto args = *opt_args;
-    if (args.empty()) {
-        return Err::ok;
-    }
-    const auto [cmd_ptr, cmd_args] = this->find_cmd(args);
-    if (!cmd_ptr) {
-        return Err::unknownCmd;
-    }
-    return this->execute(*cmd_ptr, cmd_args);
+    return Err::ok;
 }
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
