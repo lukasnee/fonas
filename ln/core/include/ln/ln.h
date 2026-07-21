@@ -79,6 +79,20 @@ void sleep(std::chrono::duration<Rep, Period> duration) {
 bool interrupt_context();
 
 /**
+ * @brief Disable interrupts.
+ *
+ * @note Port-specific implementation.
+ */
+void disable_irq();
+
+/**
+ * @brief Enable interrupts.
+ *
+ * @note Port-specific implementation.
+ */
+void enable_irq();
+
+/**
  * @brief Get the name of the current task. Invalid if interrupt_context() is
  * true.
  *

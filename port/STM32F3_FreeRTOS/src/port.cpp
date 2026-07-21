@@ -35,6 +35,10 @@ static uint32_t get_ipsr() {
     return ipsr;
 }
 
+void disable_irq() { __disable_irq(); }
+
+void enable_irq() { __enable_irq(); }
+
 /**
  * @brief Prints words in hexadecimal format.
  *
