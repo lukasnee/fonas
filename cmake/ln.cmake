@@ -2,6 +2,19 @@ include_guard()
 
 include(${CMAKE_CURRENT_LIST_DIR}/bloaty.cmake)
 
+function(ln_configure)
+  execute_process(
+    COMMAND git describe --always --dirty --match "NOT A TAG"
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    OUTPUT_VARIABLE git_hash
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  configure_file(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/build.hpp.in
+                 ${CMAKE_BINARY_DIR}/include/ln/build.hpp @ONLY)
+  include_directories(${CMAKE_BINARY_DIR}/include)
+
+  add_compile_options(-ffile-prefix-map=${PROJECT_SOURCE_DIR}=.)
+endfunction()
+
 function(ln_generate_firmware_output_files fw_target)
   target_link_options(
     ${fw_target} PUBLIC -Wl,-Map=${CMAKE_CURRENT_BINARY_DIR}/${fw_target}.map
@@ -53,14 +66,10 @@ function(ln_add_firmware target_name linker_script openocd_cfg)
   target_link_options(${target_name} PRIVATE -T${linker_script})
   set_property(TARGET ${target_name} PROPERTY LINK_DEPENDS ${linker_script})
 
-  execute_process(
-    COMMAND git describe --always --dirty --match "NOT A TAG"
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    OUTPUT_VARIABLE git_hash
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
-  configure_file(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/build.hpp.in
-                 ${CMAKE_BINARY_DIR}/include/ln/build.hpp @ONLY)
-  target_include_directories(fibsys INTERFACE ${CMAKE_BINARY_DIR}/include)
+  configure_file(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/project.hpp.in
+                 ${CMAKE_CURRENT_BINARY_DIR}/include/ln/project.hpp @ONLY)
+  target_include_directories(${target_name}
+                             PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/include)
 
   if(LN_BLOATY)
     ln_bloaty_compare_with_previous_build(${target_name})

@@ -1,0 +1,16 @@
+// Copyright (c) 2026 Lukas Neverauskis <lukas.neverauskis@gmail.com>
+// SPDX-License-Identifier: GPL-2.0-only
+
+#pragma once
+
+#include <cstdint>
+
+namespace ln::project {
+const char *name = "@target_name@";
+namespace version {
+const uint32_t major = @PROJECT_VERSION_MAJOR@;
+const uint32_t minor = @PROJECT_VERSION_MINOR@;
+const uint32_t patch = @PROJECT_VERSION_PATCH@;
+const char *str = "@PROJECT_VERSION@";
+} // namespace version
+} // namespace ln::project

@@ -1,16 +1,7 @@
 #pragma once
 
-#include <cstdint>
-
-namespace ln { namespace build {
-    const char *name = "@target_name@";
-    namespace version {
-        const uint32_t major = @PROJECT_VERSION_MAJOR@;
-        const uint32_t minor = @PROJECT_VERSION_MINOR@;
-        const uint32_t patch = @PROJECT_VERSION_PATCH@;
-        const char *str = "@PROJECT_VERSION@";
-    } // namespace version
-    const char *git_hash = "@git_hash@";
-    const char *date = __DATE__;
-    const char *time = __TIME__;
-}} // namespace ln::build
+namespace ln::build {
+const char *git_hash = "@git_hash@";
+const char *date = __DATE__;
+const char *time = __TIME__;
+} // namespace ln::build
