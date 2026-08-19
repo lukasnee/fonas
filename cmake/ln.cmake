@@ -3,6 +3,20 @@ include_guard()
 include(${CMAKE_CURRENT_LIST_DIR}/bloaty.cmake)
 
 function(ln_configure)
+
+  find_program(CCACHE_PROGRAM ccache)
+  if(CCACHE_PROGRAM)
+    set(CMAKE_C_COMPILER_LAUNCHER
+        ${CCACHE_PROGRAM}
+        PARENT_SCOPE)
+    set(CMAKE_CXX_COMPILER_LAUNCHER
+        ${CCACHE_PROGRAM}
+        PARENT_SCOPE)
+    message(STATUS "ccache found: ${CCACHE_PROGRAM}")
+  else()
+    message(STATUS "ccache not found, building without it")
+  endif()
+
   execute_process(
     COMMAND git describe --always --dirty --match "NOT A TAG"
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
