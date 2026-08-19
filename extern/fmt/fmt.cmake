@@ -16,11 +16,11 @@ FetchContent_MakeAvailable(fmt)
 # Options tailored for embedded systems (size optimization, no exceptions, etc.)
 target_compile_definitions(
   fmt
-  PUBLIC NDEBUG=0
-         # FMT_THROW(s)=abort() # This saves 2-3Kb of flash but CMake does not
-         # allow defining function-like macros with arguments... I did not found
-         # a way to configure this cleanly without doing modifations to fmt's
-         # source code. As an alternative, we use FMT_CUSTOM_ASSERT_FAIL=1
+  PUBLIC # NDEBUG=0 FMT_THROW(s)=abort() # This saves 2-3Kb of flash but CMake
+         # does not allow defining function-like macros with arguments... I did
+         # not found a way to configure this cleanly without doing modifations
+         # to fmt's source code. As an alternative, we use
+         # FMT_CUSTOM_ASSERT_FAIL=1
          FMT_CUSTOM_ASSERT_FAIL=1
          FMT_USE_FLOAT=0
          FMT_USE_DOUBLE=0
