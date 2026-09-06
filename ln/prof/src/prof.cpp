@@ -1,16 +1,14 @@
 // Copyright (c)  2026 Lukas Neverauskis <lukas.neverauskis@gmail.com>
 // SPDX-License-Identifier: GPL-2.0-only
 
+#include "ln/prof/prof.h"
+
 #ifndef LN_PROF_ITM_PORT
 #define LN_PROF_ITM_PORT 0
 #endif
-
 #include "ln/ln.h"
 
 #include "ln/port/itm.h"
-
-#define LN_ITM_IS_PORT_READY(port)                                             \
-    LN_ITM_IS_ENABLED() && LN_ITM_IS_PORT_ENABLED((port))
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -41,8 +39,9 @@ struct Packet {
 
 // Attention: performance is of utmost importance
 
-bool initialized = false;
-static void init() {
+volatile bool started = false;
+
+void ln_prof_start() {
 
     // Enable trace (required for ITM and DWT)
     CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
@@ -52,29 +51,33 @@ static void init() {
     // Unlock ITM
     ITM->LAR = 0xC5ACCE55;
     // Enable ITM
+    ITM->TCR |= ITM_TCR_ITMENA_Msk;
     // Enable stimulus port 0 (LN_PROF_ITM_PORT)
-    ITM->TCR = ITM_TCR_ITMENA_Msk;
-    ITM->TER = (1UL << LN_PROF_ITM_PORT);
+    ITM->TER |= (1UL << LN_PROF_ITM_PORT);
 
     if (!LN_ITM_IS_PORT_READY(LN_PROF_ITM_PORT)) {
+        ITM->TER &= ~(1UL << LN_PROF_ITM_PORT); // undo
         return;
     }
+    started = true;
+}
+
+void ln_prof_stop() {
+    ITM->TER &= ~(1UL << LN_PROF_ITM_PORT);
+
+    started = false;
 }
 
 static uint32_t last_cycle_count = 0;
 
-extern "C" __attribute__((optimize("O3"), hot)) void __cyg_profile_func_enter(
-    void *this_fn, void *call_site) {
+extern "C" LN_PROF_ATTR void __cyg_profile_func_enter(void *this_fn,
+                                                      void *call_site) {
     (void)call_site;
+    if (!started) {
+        return;
+    }
     if (ln::interrupt_context()) {
         return;
-    }
-    if (!LN_ITM_IS_PORT_READY(LN_PROF_ITM_PORT)) {
-        return;
-    }
-    if (!initialized) {
-        init();
-        initialized = true;
     }
     const uint32_t cycle_count = DWT->CYCCNT;
     ln::disable_irq();
@@ -93,10 +96,10 @@ extern "C" __attribute__((optimize("O3"), hot)) void __cyg_profile_func_enter(
 
 extern "C" __attribute__((optimize("O3"), hot)) void __cyg_profile_func_exit(
     void *this_fn, [[maybe_unused]] void *call_site) {
-    if (ln::interrupt_context()) {
+    if (!started) {
         return;
     }
-    if (!LN_ITM_IS_PORT_READY(LN_PROF_ITM_PORT)) {
+    if (ln::interrupt_context()) {
         return;
     }
     const uint32_t cycle_count = DWT->CYCCNT;

@@ -5,6 +5,8 @@
 
 #define LN_ITM_IS_ENABLED() ((ITM->TCR & ITM_TCR_ITMENA_Msk) != 0UL)
 #define LN_ITM_IS_PORT_ENABLED(port) ((ITM->TER & (1UL << (port))) != 0UL)
+#define LN_ITM_IS_PORT_READY(port)                                             \
+    (LN_ITM_IS_ENABLED() && LN_ITM_IS_PORT_ENABLED((port)))
 
 #define LN_ITM_SEND_WORD(port, value)                                          \
     while (ITM->PORT[(port)].u32 == 0UL) {                                     \
