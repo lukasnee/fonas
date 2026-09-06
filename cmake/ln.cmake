@@ -1,6 +1,7 @@
 include_guard()
 
 include(${CMAKE_CURRENT_LIST_DIR}/bloaty.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/clang-tidy.cmake)
 
 function(ln_configure)
 
@@ -27,6 +28,9 @@ function(ln_configure)
   include_directories(${CMAKE_BINARY_DIR}/include)
 
   add_compile_options(-ffile-prefix-map=${PROJECT_SOURCE_DIR}=.)
+
+  ln_enable_clang_tidy()
+
 endfunction()
 
 function(ln_generate_firmware_output_files fw_target)
