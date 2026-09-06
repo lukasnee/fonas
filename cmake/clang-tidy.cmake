@@ -4,10 +4,6 @@ macro(ln_enable_clang_tidy)
   if(CLANG_TIDY_EXE)
     message(STATUS "clang-tidy found: ${CLANG_TIDY_EXE}")
   else()
-    message(WARNING "clang-tidy not found!")
-  endif()
-
-  if(NOT CLANG_TIDY_EXE)
     message(
       FATAL_ERROR
         "clang-tidy is required for static analysis. Please install clang-tidy and try again."
