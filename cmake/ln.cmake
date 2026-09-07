@@ -3,16 +3,14 @@ include_guard()
 include(${CMAKE_CURRENT_LIST_DIR}/bloaty.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/clang-tidy.cmake)
 
-function(ln_configure)
+set(macro_ln_configure_dir ${CMAKE_CURRENT_LIST_DIR})
+
+macro(ln_configure)
 
   find_program(CCACHE_PROGRAM ccache)
   if(CCACHE_PROGRAM)
-    set(CMAKE_C_COMPILER_LAUNCHER
-        ${CCACHE_PROGRAM}
-        PARENT_SCOPE)
-    set(CMAKE_CXX_COMPILER_LAUNCHER
-        ${CCACHE_PROGRAM}
-        PARENT_SCOPE)
+    set(CMAKE_C_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
+    set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
     message(STATUS "ccache found: ${CCACHE_PROGRAM}")
   else()
     message(STATUS "ccache not found, building without it")
@@ -23,15 +21,18 @@ function(ln_configure)
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     OUTPUT_VARIABLE git_hash
     OUTPUT_STRIP_TRAILING_WHITESPACE)
-  configure_file(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/build.hpp.in
+  configure_file(${macro_ln_configure_dir}/config/build.hpp.in
                  ${CMAKE_BINARY_DIR}/include/ln/build.hpp @ONLY)
   include_directories(${CMAKE_BINARY_DIR}/include)
 
-  add_compile_options(-ffile-prefix-map=${PROJECT_SOURCE_DIR}=.)
+  add_compile_options(-ffile-prefix-map=${CMAKE_SOURCE_DIR}=.
+                      -ffile-prefix-map=${CMAKE_BINARY_DIR}=.)
 
-  ln_enable_clang_tidy()
+  if(NOT LN_PROF)
+    ln_enable_clang_tidy()
+  endif()
 
-endfunction()
+endmacro()
 
 function(ln_generate_firmware_output_files fw_target)
   target_link_options(
