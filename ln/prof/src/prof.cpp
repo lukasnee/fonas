@@ -43,6 +43,7 @@ struct Packet {
 // Attention: performance is of utmost importance
 
 volatile bool started = false;
+static uint32_t last_cycle_count = 0;
 
 void ln_prof_start() {
 
@@ -50,6 +51,7 @@ void ln_prof_start() {
     CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
     // Reset and enable cycle counter (used by ln/prof for timestamps)
     DWT->CYCCNT = 0;
+    last_cycle_count = 0;
     DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
     // Unlock ITM
     ITM->LAR = 0xC5ACCE55;
@@ -70,8 +72,6 @@ void ln_prof_stop() {
 
     started = false;
 }
-
-static uint32_t last_cycle_count = 0;
 
 extern "C" LN_PROF_ATTR void __cyg_profile_func_enter(void *this_fn,
                                                       void *call_site) {
