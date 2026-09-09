@@ -40,8 +40,6 @@ struct Packet {
 #pragma pack(pop)
 };
 
-// Attention: performance is of utmost importance
-
 volatile bool started = false;
 static uint32_t last_cycle_count = 0;
 
@@ -73,6 +71,18 @@ void ln_prof_stop() {
     started = false;
 }
 
+/**
+ * @attention Performance is of utmost importance!
+ *
+ * @todo Research further optimizations for __cyg_profile_func_enter/exit if
+ * there's motivation to squeeze more:
+ * - xTaskGetCurrentTaskHandle()/uxTaskGetTaskNumber() are still real calls;
+ *   avoiding them means reaching into FreeRTOS's private TCB_t layout (fragile,
+ *   breaks on kernel/config changes) - not done so far.
+ * - Project-wide LTO could let the compiler inline across these TU boundaries
+ *   safely, but that's a broad build-system change with its own risk/build-time
+ *   tradeoffs, not scoped to this file.
+ */
 extern "C" LN_PROF_ATTR void __cyg_profile_func_enter(void *this_fn,
                                                       void *call_site) {
     (void)call_site;
