@@ -87,12 +87,12 @@ extern "C" LN_PROF_ATTR void __cyg_profile_func_enter(void *this_fn,
     const uint32_t cycle_count = DWT->CYCCNT;
     const uint32_t word0 =
         Packet::SYNC_BYTE | ((cycle_count - last_cycle_count) << 8);
+    last_cycle_count = cycle_count;
+    LN_ITM_SEND_WORD(LN_PROF_ITM_PORT, word0);
     const uint32_t word1 =
         (static_cast<uint32_t>(Packet::Type::enter)) |
         ((uxTaskGetTaskNumber(xTaskGetCurrentTaskHandle()) & 0x7F) << 1) |
         ((reinterpret_cast<uint32_t>(this_fn) & 0x00FFFFFF) << 8);
-    last_cycle_count = cycle_count;
-    LN_ITM_SEND_WORD(LN_PROF_ITM_PORT, word0);
     LN_ITM_SEND_WORD(LN_PROF_ITM_PORT, word1);
     __set_PRIMASK(old_primask);
 }
@@ -110,12 +110,12 @@ extern "C" LN_PROF_ATTR void __cyg_profile_func_exit(
     const uint32_t cycle_count = DWT->CYCCNT;
     const uint32_t word0 =
         Packet::SYNC_BYTE | ((cycle_count - last_cycle_count) << 8);
+    last_cycle_count = cycle_count;
+    LN_ITM_SEND_WORD(LN_PROF_ITM_PORT, word0);
     const uint32_t word1 =
         (static_cast<uint32_t>(Packet::Type::exit)) |
         ((uxTaskGetTaskNumber(xTaskGetCurrentTaskHandle()) & 0x7F) << 1) |
         ((reinterpret_cast<uint32_t>(this_fn) & 0x00FFFFFF) << 8);
-    last_cycle_count = cycle_count;
-    LN_ITM_SEND_WORD(LN_PROF_ITM_PORT, word0);
     LN_ITM_SEND_WORD(LN_PROF_ITM_PORT, word1);
     __set_PRIMASK(old_primask);
 }
