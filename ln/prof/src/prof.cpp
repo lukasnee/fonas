@@ -15,6 +15,9 @@
 #include <cstdint>
 #include <stdint.h>
 
+// Wire format reference. Built manually in the hot path below (see
+// __cyg_profile_func_enter/exit) to avoid the stack round-trips gcc emits
+// when lowering this bitfield struct.
 struct Packet {
     enum class Type : uint32_t {
         enter = 0,
@@ -82,16 +85,15 @@ extern "C" LN_PROF_ATTR void __cyg_profile_func_enter(void *this_fn,
     uint32_t old_primask = __get_PRIMASK();
     __disable_irq();
     const uint32_t cycle_count = DWT->CYCCNT;
-    Packet packet{
-        .sync_byte = Packet::SYNC_BYTE,
-        .cycle_cnt_delta = cycle_count - last_cycle_count,
-        .type = static_cast<uint32_t>(Packet::Type::enter),
-        .context = uxTaskGetTaskNumber(xTaskGetCurrentTaskHandle()),
-        .fn = reinterpret_cast<uint32_t>(this_fn) & 0x00FFFFFF,
-    };
+    const uint32_t word0 =
+        Packet::SYNC_BYTE | ((cycle_count - last_cycle_count) << 8);
+    const uint32_t word1 =
+        (static_cast<uint32_t>(Packet::Type::enter)) |
+        ((uxTaskGetTaskNumber(xTaskGetCurrentTaskHandle()) & 0x7F) << 1) |
+        ((reinterpret_cast<uint32_t>(this_fn) & 0x00FFFFFF) << 8);
     last_cycle_count = cycle_count;
-    LN_ITM_SEND_WORD(LN_PROF_ITM_PORT, packet.as_u32[0]);
-    LN_ITM_SEND_WORD(LN_PROF_ITM_PORT, packet.as_u32[1]);
+    LN_ITM_SEND_WORD(LN_PROF_ITM_PORT, word0);
+    LN_ITM_SEND_WORD(LN_PROF_ITM_PORT, word1);
     __set_PRIMASK(old_primask);
 }
 
@@ -106,15 +108,14 @@ extern "C" LN_PROF_ATTR void __cyg_profile_func_exit(
     uint32_t old_primask = __get_PRIMASK();
     __disable_irq();
     const uint32_t cycle_count = DWT->CYCCNT;
-    Packet packet{
-        .sync_byte = Packet::SYNC_BYTE,
-        .cycle_cnt_delta = cycle_count - last_cycle_count,
-        .type = static_cast<uint32_t>(Packet::Type::exit),
-        .context = uxTaskGetTaskNumber(xTaskGetCurrentTaskHandle()),
-        .fn = reinterpret_cast<uint32_t>(this_fn) & 0x00FFFFFF,
-    };
+    const uint32_t word0 =
+        Packet::SYNC_BYTE | ((cycle_count - last_cycle_count) << 8);
+    const uint32_t word1 =
+        (static_cast<uint32_t>(Packet::Type::exit)) |
+        ((uxTaskGetTaskNumber(xTaskGetCurrentTaskHandle()) & 0x7F) << 1) |
+        ((reinterpret_cast<uint32_t>(this_fn) & 0x00FFFFFF) << 8);
     last_cycle_count = cycle_count;
-    LN_ITM_SEND_WORD(LN_PROF_ITM_PORT, packet.as_u32[0]);
-    LN_ITM_SEND_WORD(LN_PROF_ITM_PORT, packet.as_u32[1]);
+    LN_ITM_SEND_WORD(LN_PROF_ITM_PORT, word0);
+    LN_ITM_SEND_WORD(LN_PROF_ITM_PORT, word1);
     __set_PRIMASK(old_primask);
 }
