@@ -6,13 +6,13 @@
 #ifndef LN_PROF_ITM_PORT
 #define LN_PROF_ITM_PORT 0
 #endif
-#include "ln/ln.h"
 
 #include "ln/port/itm.h"
 
 #include "FreeRTOS.h"
 #include "task.h"
 
+#include <cstdint>
 #include <stdint.h>
 
 struct Packet {
@@ -76,11 +76,11 @@ extern "C" LN_PROF_ATTR void __cyg_profile_func_enter(void *this_fn,
     if (!started) {
         return;
     }
-    if (ln::interrupt_context()) {
+    if (xPortIsInsideInterrupt()) {
         return;
     }
     uint32_t old_primask = __get_PRIMASK();
-    ln::disable_irq();
+    __disable_irq();
     const uint32_t cycle_count = DWT->CYCCNT;
     Packet packet{
         .sync_byte = Packet::SYNC_BYTE,
@@ -100,11 +100,11 @@ extern "C" LN_PROF_ATTR void __cyg_profile_func_exit(
     if (!started) {
         return;
     }
-    if (ln::interrupt_context()) {
+    if (xPortIsInsideInterrupt()) {
         return;
     }
     uint32_t old_primask = __get_PRIMASK();
-    ln::disable_irq();
+    __disable_irq();
     const uint32_t cycle_count = DWT->CYCCNT;
     Packet packet{
         .sync_byte = Packet::SYNC_BYTE,

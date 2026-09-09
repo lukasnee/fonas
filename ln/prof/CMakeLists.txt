@@ -65,6 +65,7 @@ else()
     ln_prof
     EXCLUDE_FUNCTIONS
     "ln::prof::Scope"
+    "xPortIsInsideInterrupt"
     EXCLUDE_FILES
     "std::"
     "CMSIS"
