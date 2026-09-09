@@ -478,8 +478,8 @@ if __name__ == "__main__":
     parser.add_argument("frame_data_path", help="Frame data file path")
     parser.add_argument(
         "--out_ext",
-        default="speedscope",
-        choices=["speedscope", "json"],
+        default="spsc",
+        choices=["spsc", "json"],
         help="Output file extension",
     )
     parser.add_argument("--begin", type=float, help="Timestamp from in seconds")
