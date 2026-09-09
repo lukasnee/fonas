@@ -79,8 +79,9 @@ extern "C" LN_PROF_ATTR void __cyg_profile_func_enter(void *this_fn,
     if (ln::interrupt_context()) {
         return;
     }
-    const uint32_t cycle_count = DWT->CYCCNT;
+    uint32_t old_primask = __get_PRIMASK();
     ln::disable_irq();
+    const uint32_t cycle_count = DWT->CYCCNT;
     Packet packet{
         .sync_byte = Packet::SYNC_BYTE,
         .cycle_cnt_delta = cycle_count - last_cycle_count,
@@ -91,10 +92,10 @@ extern "C" LN_PROF_ATTR void __cyg_profile_func_enter(void *this_fn,
     last_cycle_count = cycle_count;
     LN_ITM_SEND_WORD(LN_PROF_ITM_PORT, packet.as_u32[0]);
     LN_ITM_SEND_WORD(LN_PROF_ITM_PORT, packet.as_u32[1]);
-    ln::enable_irq();
+    __set_PRIMASK(old_primask);
 }
 
-extern "C" __attribute__((optimize("O3"), hot)) void __cyg_profile_func_exit(
+extern "C" LN_PROF_ATTR void __cyg_profile_func_exit(
     void *this_fn, [[maybe_unused]] void *call_site) {
     if (!started) {
         return;
@@ -102,8 +103,9 @@ extern "C" __attribute__((optimize("O3"), hot)) void __cyg_profile_func_exit(
     if (ln::interrupt_context()) {
         return;
     }
-    const uint32_t cycle_count = DWT->CYCCNT;
+    uint32_t old_primask = __get_PRIMASK();
     ln::disable_irq();
+    const uint32_t cycle_count = DWT->CYCCNT;
     Packet packet{
         .sync_byte = Packet::SYNC_BYTE,
         .cycle_cnt_delta = cycle_count - last_cycle_count,
@@ -114,5 +116,5 @@ extern "C" __attribute__((optimize("O3"), hot)) void __cyg_profile_func_exit(
     last_cycle_count = cycle_count;
     LN_ITM_SEND_WORD(LN_PROF_ITM_PORT, packet.as_u32[0]);
     LN_ITM_SEND_WORD(LN_PROF_ITM_PORT, packet.as_u32[1]);
-    ln::enable_irq();
+    __set_PRIMASK(old_primask);
 }
